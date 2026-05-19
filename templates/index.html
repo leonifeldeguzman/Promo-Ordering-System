@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Promo Recommendation System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <div class="container">
+
+        <h1>McDonald's Voice Promo Finder</h1>
+
+        <div class="voice-section">
+            <button id="micBtn" class="mic-btn" onclick="startVoiceRecognition()">🎤</button>
+            <div id="status">Waiting for voice command...</div>
+            <div id="micIndicator" style="margin-top:8px; font-weight:bold; color:gray;">
+                Mic is OFF
+            </div>
+        </div>
+
+        <div id="results"></div>
+
+    </div>
+
+    <script src="{{ url_for('static', filename='js/voice.js') }}"></script>
+
+</body>
+</html>
