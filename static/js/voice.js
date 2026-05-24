@@ -1,3 +1,4 @@
+
 function startVoiceRecognition() {
 
     const micBtn = document.getElementById('micBtn');
@@ -5,11 +6,19 @@ function startVoiceRecognition() {
     const micIndicator = document.getElementById('micIndicator');
     const resultsDiv = document.getElementById('results');
 
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
 
-    recognition.lang = 'en-US';
+    if (!SpeechRecognition) {
+        alert("SpeechRecognition not supported in this browser");
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
     recognition.interimResults = false;
 
+    // UI ON
     micBtn.style.background = "red";
     micIndicator.innerText = "Mic is ON 🔴 Listening...";
     micIndicator.style.color = "red";
@@ -17,43 +26,71 @@ function startVoiceRecognition() {
 
     recognition.onresult = async function(event) {
 
-        const transcript = event.results[0][0].transcript;
+        const transcript = event.results[0][0].transcript.toLowerCase();
         status.innerText = "Heard: " + transcript;
 
+        // extract budget
         const numbers = transcript.match(/\d+/);
+        let budget = numbers ? numbers[0] : null;
 
-        if (!numbers) {
-            status.innerText = "No budget detected.";
-            return;
-        }
+        // detect category
+        let category = "";
 
-        const budget = numbers[0];
+        if (transcript.includes("chicken")) category = "Chicken";
+        else if (transcript.includes("burger")) category = "Burger";
+        else if (transcript.includes("fries")) category = "Fries";
+        else if (transcript.includes("rice")) category = "Rice Meal";
+        else if (transcript.includes("drink")) category = "Drinks";
 
-        // CALL BACKEND
-        const response = await fetch(`/promos/budget/${budget}`);
-        const data = await response.json();
+        // build API URL
+        let url = "";
 
-        // SHOW RESULTS
-        resultsDiv.innerHTML = "";
+        if (category && budget) url = `/promos/${category}/${budget}`;
+        else if (category) url = `/promos/category/${category}`;
+        else if (budget) url = `/promos/budget/${budget}`;
+        else url = `/promos`;
 
-        if (data.length === 0) {
-            resultsDiv.innerHTML = "<p>No promos found.</p>";
-        } else {
-            data.forEach(promo => {
-                resultsDiv.innerHTML += `
-                    <div class="promo-card">
-                        <h3>${promo.name}</h3>
-                        <p>${promo.category}</p>
-                        <p>₱${promo.price}</p>
-                        <p>${promo.description}</p>
-                    </div>
-                `;
-            });
+        try {
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            resultsDiv.innerHTML = "";
+
+            let reply = "";
+
+            if (data.length === 0) {
+                resultsDiv.innerHTML = "<p>No promos found.</p>";
+                reply = "Sorry, no promos found.";
+            } else {
+                reply = `I found ${data.length} promos for you.`;
+
+                data.forEach(promo => {
+                    resultsDiv.innerHTML += `
+                        <div class="promo-card">
+                            <h3>${promo.name}</h3>
+                            <p>${promo.category}</p>
+                            <p>₱${promo.price}</p>
+                            <p>${promo.description}</p>
+                        </div>
+                    `;
+                });
+            }
+
+            // 🔊 SPEAK BACK (TEXT TO SPEECH)
+            const speech = new SpeechSynthesisUtterance(reply);
+            speech.lang = "en-US";
+            speech.rate = 1;
+            window.speechSynthesis.speak(speech);
+
+        } catch (err) {
+            console.error(err);
+            status.innerText = "Error fetching promos.";
         }
     };
 
     recognition.onerror = function() {
-        status.innerText = "Voice error. Try again.";
+        status.innerText = "Voice recognition error.";
     };
 
     recognition.onend = function() {
