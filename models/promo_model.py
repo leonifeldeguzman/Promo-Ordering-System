@@ -16,7 +16,7 @@ def get_promos_by_category(category):
 
 def get_all_promos():
     cursor = conn.cursor()
-    query = "SELECT * FROM promos"
+    query = "SELECT id, name, price, category, promo_details, status FROM promos"
     cursor.execute(query)
     promos = cursor.fetchall()
     return promos
@@ -84,5 +84,13 @@ def update_status(item_id, status):
     """
 
     cursor.execute(query, (status, item_id))
+
+    conn.commit()
+
+
+def delete_menu_item(item_id):
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM promos WHERE id = %s", (item_id,))
 
     conn.commit()

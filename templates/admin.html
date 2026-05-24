@@ -49,26 +49,28 @@
 
             <!-- UPDATE PRICE -->
             <form action="/update-price/{{ item[0] }}" method="POST">
-
-                <input type="number"
-                       step="0.01"
-                       name="price"
-                       placeholder="New Price">
-
+                <input type="number" step="0.01" name="price" placeholder="New Price">
                 <button type="submit">Update Price</button>
-
             </form>
 
             <!-- UPDATE STATUS -->
             <form action="/update-status/{{ item[0] }}" method="POST">
-
                 <select name="status">
                     <option value="Active">Active</option>
                     <option value="Phased Out">Phased Out</option>
                     <option value="Sold Out">Sold Out</option>
                 </select>
-
                 <button type="submit">Update Status</button>
+            </form>
+
+            <!-- DELETE ITEM -->
+            <form action="/delete-item/{{ item[0] }}" method="POST">
+                <button type="submit" style="background:red; color:white;">
+                    Delete
+                </button>
+            </form>
+
+          
 
             </form>
 

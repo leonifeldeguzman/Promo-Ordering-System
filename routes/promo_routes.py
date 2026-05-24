@@ -8,7 +8,8 @@ from models.promo_model import (
     get_promos_by_category_and_budget,
     add_menu_item,
     update_price,
-    update_status
+    update_status,
+    delete_menu_item
 )
 
 promo_routes = Blueprint('promo_routes', __name__)
@@ -94,7 +95,7 @@ def admin_page():
 
     return render_template(
         'admin.html',
-        promos=results
+        items=results
     )
 
 
@@ -105,10 +106,10 @@ def admin_page():
 @promo_routes.route('/add-item', methods=['POST'])
 def add_item():
 
-    name = request.form['name']
-    category = request.form['category']
+    name = request.form['item_name']
+    category = request.form.get('category')
     price = request.form['price']
-    promo_details = request.form['promo_details']
+    promo_details = request.form.get('promo_details')
     status = request.form['status']
 
     add_menu_item(
@@ -147,4 +148,12 @@ def change_status(item_id):
 
     update_status(item_id, status)
 
+    return redirect('/admin')
+
+# =========================
+# DELETE STATUS
+# =========================
+@promo_routes.route('/delete-item/<int:item_id>', methods=['POST'])
+def delete_item(item_id):
+    delete_menu_item(item_id)
     return redirect('/admin')
