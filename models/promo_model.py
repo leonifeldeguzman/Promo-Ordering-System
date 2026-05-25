@@ -16,7 +16,10 @@ def get_promos_by_category(category):
 
 def get_all_promos():
     cursor = conn.cursor()
-    query = "SELECT id, name, price, category, promo_details, status FROM promos"
+    query = """
+        SELECT id, name, category, price, description, promo_details, status, image_url
+        FROM promos
+    """
     cursor.execute(query)
     promos = cursor.fetchall()
     return promos
@@ -37,24 +40,28 @@ def get_promos_by_category_and_budget(category, budget):
 
     return promos
 
-def add_menu_item(name, price, category, promo_details, status):
-
+def add_menu_item(name, price, category, promo_details, status, image_url):
     cursor = conn.cursor()
-
+    
     query = """
         INSERT INTO promos
-        (name, price, category, promo_details, status)
-        VALUES (%s, %s, %s, %s, %s)
+        (name, price, category, description, promo_details, status, image_url)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
-
+    
+    # Create a description 
+    description = f"Delicious {name} promo! Save big on this tasty offer."
+    
     cursor.execute(query, (
         name,
         price,
         category,
+        description,  # Add this field
         promo_details,
-        status
+        status,
+        image_url
     ))
-
+    
     conn.commit()
 
 

@@ -4,12 +4,14 @@
     <title>Admin Panel</title>
 </head>
 <body>
-
+<a href="/logout">
+    Logout
+</a>
     <h1>Admin Panel</h1>
 
     <h2>Add Menu Item</h2>
 
-    <form action="/add-item" method="POST">
+    <form action="/add-item" method="POST"  enctype="multipart/form-data">
 
         <input type="text" name="item_name" placeholder="Item Name" required>
 
@@ -18,6 +20,8 @@
         <input type="text" name="category" placeholder="Category">
 
         <input type="text" name="promo_details" placeholder="Promo Details">
+        <input type="file"
+       name="image">
 
         <select name="status">
             <option value="Active">Active</option>
