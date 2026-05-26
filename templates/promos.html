@@ -1,34 +1,93 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Promos</title>
-</head>
-<body>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <h1>All Promos</h1>
+    <title>SpeakNSave - Promos</title>
 
-    {% for promo in promos %}
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
 
-        <div style="border:1px solid black; padding:10px; margin:10px;">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
 
-            <h3>{{ promo[1] }}</h3>
+  <body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+      <a href="/" class="navbar-brand">
+        <span class="brand-logo">S'</span>
 
-            <p>Category: {{ promo[2] }}</p>
+        <div class="brand-text-group">
+          <span class="brand-name">Speak<span>N</span>Save</span>
+          <span class="brand-sub">VOICE ASSISTANT</span>
+        </div>
+      </a>
 
-            <p>Price: ₱{{ promo[3] }}</p>
+      <ul class="navbar-nav">
+        <li><a href="/">Home</a></li>
+        <li><a href="/voice-assistant">Recommendations</a></li>
+        <li><a href="/promos-page" class="active">Promos</a></li>
+      </ul>
+    </nav>
 
-            <p>Status: {{ promo[6] }}</p>
-            <img src="/{{ promo[7] }}"
-            width="200">
+    <!-- PAGE WRAPPER (NO RED BACKGROUND) -->
+    <main class="promo-main">
+      <!-- HEADER -->
+      <div class="promo-header">
+        <h1>
+          Discover Amazing
+          <span>Promo Deals</span>
+        </h1>
 
+        <p>
+          Browse affordable meals, combo bundles, and exclusive food promos
+          tailored for your cravings.
+        </p>
+      </div>
+
+      <!-- WHITE CONTAINER -->
+      <div class="promo-container">
+        <!-- CATEGORY TABS -->
+        <div class="promo-tabs">
+          <a href="#" class="active">All Promos</a>
+          <a href="#">Breakfast</a>
+          <a href="#">Combo Meals</a>
+          <a href="#">Burgers & Fries</a>
+          <a href="#">Happy Meal</a>
+          <a href="#">Birthday Packages</a>
+          <a href="#">Salad</a>
         </div>
 
-    {% endfor %}
+        <!-- GRID -->
+        <div class="promo-grid">
+          {% for promo in promos %}
 
-    <a href="/">
-        Home
-    </a>
-    print(promo)
+          <div class="promo-card">
+            <div class="promo-image">
+              <img src="/{{ promo[7] }}" alt="{{ promo[1] }}" />
 
-</body>
+              <span class="promo-tag"> {{ promo[2] }} </span>
+            </div>
+
+            <h3 class="promo-title">{{ promo[1] }}</h3>
+
+            <p class="promo-status">Status: <b>{{ promo[6] }}</b></p>
+
+            <div class="promo-footer">
+              <span class="promo-label">Promo Price</span>
+              <span class="promo-price">₱{{ promo[3] }}</span>
+            </div>
+          </div>
+
+          {% endfor %}
+        </div>
+      </div>
+    </main>
+  </body>
 </html>
