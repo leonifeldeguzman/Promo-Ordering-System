@@ -1,13 +1,11 @@
 import os
-from dotenv import load_dotenv
 import psycopg2
 
-load_dotenv()
+# Get database URL from Railway (no need for dotenv on Railway)
+database_url = os.getenv('DATABASE_URL')
 
-conn = psycopg2.connect(
-    host=os.getenv("PGHOST"),        
-    database=os.getenv("PGDATABASE"),
-    user=os.getenv("PGUSER"),         
-    password=os.getenv("PGPASSWORD"), 
-    port=os.getenv("PGPORT", 5432)    
-)
+if not database_url:
+    raise Exception("DATABASE_URL environment variable not found! Make sure PostgreSQL is linked to this service.")
+
+# Create connection using DATABASE_URL
+conn = psycopg2.connect(database_url)
