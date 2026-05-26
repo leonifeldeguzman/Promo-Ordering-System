@@ -5,9 +5,9 @@ import psycopg2
 load_dotenv()
 
 conn = psycopg2.connect(
-    host=os.getenv("DB_HOST"),
-    port=os.getenv("DB_PORT"),
-    database=os.getenv("DB_NAME"),
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASSWORD")
+    host=os.getenv("PGHOST"),        
+    database=os.getenv("PGDATABASE"),
+    user=os.getenv("PGUSER"),         
+    password=os.getenv("PGPASSWORD"), 
+    port=os.getenv("PGPORT", 5432)    
 )
