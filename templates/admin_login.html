@@ -1,33 +1,50 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
+
+<body class="admin-body">
+
+<div class="admin-login-card">
+
+    <div class="admin-logo">
+        S'
+    </div>
 
     <h1>Admin Login</h1>
 
     <form action="/admin-login" method="POST">
 
-        <input type="text"
-               name="username"
-               placeholder="Username"
-               required>
+        <div class="admin-input-group">
+            <input
+                type="text"
+                name="username"
+                placeholder="Admin ID"
+                required
+            >
+        </div>
 
-        <br><br>
+        <div class="admin-input-group">
+            <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                required
+            >
+        </div>
 
-        <input type="password"
-               name="password"
-               placeholder="Password"
-               required>
-
-        <br><br>
-
-        <button type="submit">
+        <button type="submit" class="admin-login-btn">
             Login
         </button>
 
     </form>
+
+</div>
 
 </body>
 </html>

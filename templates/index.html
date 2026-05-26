@@ -38,7 +38,7 @@
         }
 
        async function fetchAndRender(url) {
-    try {
+        try {
         const response = await fetch(url);
         const data = await response.json();
 
@@ -102,13 +102,15 @@
 
                     </div>
                 `;
+                
             });
+            
 
             resultsDiv.innerHTML = `
                 <div class="results-wrapper">
 
                     <div class="results-header">
-                        <h2>BURGER DEALS UNDER P150</h2>
+                        <h2>DEALS OFFERED</h2>
 
                         <div class="matches-badge">
                             Matches : ${data.length}
@@ -145,6 +147,7 @@
 
                 </div>
             `;
+            initializeCarousel();
         }
 
         const speech = new SpeechSynthesisUtterance(reply);
@@ -155,6 +158,37 @@
     } catch (err) {
         console.error(err);
     }
+}
+function initializeCarousel() {
+
+    const track = document.querySelector('.carousel-track');
+
+    const leftBtn = document.querySelector('.carousel-btn.left');
+
+    const rightBtn = document.querySelector('.carousel-btn.right');
+
+    if (!track || !leftBtn || !rightBtn) return;
+
+    const scrollAmount = 320;
+
+    rightBtn.addEventListener('click', () => {
+
+        track.scrollBy({
+            left: scrollAmount,
+            behavior: 'smooth'
+        });
+
+    });
+
+    leftBtn.addEventListener('click', () => {
+
+        track.scrollBy({
+            left: -scrollAmount,
+            behavior: 'smooth'
+        });
+
+    });
+
 }
 
         function processQuery(transcript) {
@@ -168,6 +202,9 @@
             else if (text.includes('fries'))  category = 'Fries';
             else if (text.includes('rice'))   category = 'Rice Meal';
             else if (text.includes('drink'))  category = 'Drinks';
+            else if (text.includes('dessert'))  category = 'Dessert';
+             else if (text.includes('Combo Meal'))  category = 'Combo Meal';
+
 
             let url = '';
             if (category && budget)  url = `/promos/${category}/${budget}`;
@@ -246,6 +283,7 @@
             <li><a href="/">Home</a></li>
             <li><a href="/voice-assistant" class="active">Recommendations</a></li>
             <li><a href="/promos-page">Promos</a></li>
+            <li><a href="/admin-login">Admin Login</a></li>
         </ul>
     </nav>
 

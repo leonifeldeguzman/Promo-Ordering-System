@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 <a href="/logout">
@@ -41,15 +42,12 @@
 
         <div style="border:1px solid black; padding:10px; margin:10px;">
 
-            <p><strong>{{ item[1] }}</strong></p>
-
-            <p>Price: ₱{{ item[2] }}</p>
-
-            <p>Category: {{ item[3] }}</p>
-
-            <p>Promo: {{ item[4] }}</p>
-
-            <p>Status: {{ item[5] }}</p>
+            <p><strong>{{ item[1] }}</strong></p>         
+            <p>Category: {{ item[2] }}</p>                  
+            <p>Price: ₱{{ item[3] }}</p>                   
+            <p>Description: {{ item[4] }}</p>               
+            <p>Promo: {{ item[5] }}</p>                     
+            <p>Status: {{ item[6] }}</p>                   
 
             <!-- UPDATE PRICE -->
             <form action="/update-price/{{ item[0] }}" method="POST">
