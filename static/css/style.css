@@ -898,7 +898,7 @@ body {
     content:"";
     position:fixed;
     inset:0;
-
+    flex-direction: column;
     background:rgba(0,0,0,0.10);
 
     z-index:-1;
@@ -1002,7 +1002,6 @@ body {
     box-shadow:
     0 5px 20px rgba(255,195,2,.45);
 }
-
 
 /* =========================================
    RESPONSIVE
@@ -1208,3 +1207,4 @@ body {
   font-weight: 800;
   color: var(--red);
 }
+

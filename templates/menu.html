@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SpeakNSave Admin Panel - Menu List</title>
+
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+
+  <body>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-top">
+        <div class="brand">
+          <div class="logo">S'</div>
+          <div>
+            <h1>SpeakNSave</h1>
+            <span>ADMIN PANEL</span>
+          </div>
+        </div>
+
+        <nav>
+          <a href="#">Dashboard</a>
+          <a href="#" class="active">Inventory</a>
+          <a href="#">Logs</a>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <header class="header">
+        <h2>Menu Inventory</h2>
+
+        <div class="header-right">
+          <div class="search-box">
+            <i class="fa fa-search"></i>
+            <input type="text" placeholder="Search menu, promos, orders..." />
+          </div>
+
+          <div class="user-icon">
+            <i class="fa fa-user"></i>
+          </div>
+        </div>
+      </header>
+
+      <div class="card">
+        <div class="tabs">
+          <button class="tab-btn">Add Menu Item</button>
+          <button class="tab-btn active">Menu List</button>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Menu Item</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Promo</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td>Cheeseburger Deal</td>
+                <td>Burger</td>
+                <td>₱125</td>
+                <td><span class="badge active">Active</span></td>
+                <td>LTO</td>
+                <td class="actions">
+                  <a href="#">Edit</a>
+                  <a href="#" class="danger">Del</a>
+                </td>
+              </tr>
+
+              <tr>
+                <td>Cheeseburger Deal</td>
+                <td>Burger</td>
+                <td>₱125</td>
+                <td><span class="badge active">Active</span></td>
+                <td>LTO</td>
+                <td class="actions">
+                  <a href="#">Edit</a>
+                  <a href="#" class="danger">Del</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

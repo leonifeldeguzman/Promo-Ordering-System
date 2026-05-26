@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpeakNSave Admin Panel - Menu Inventory</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+
+    :root {
+      --color-red: #D61C1C;
+      --color-yellow: #F9C32C;
+      --color-yellow-hover: #e2b024;
+      --color-bg: #F4F6F8;
+      --color-white: #ffffff;
+      --color-text-dark: #2D3748;
+      --color-text-muted: #A0AEC0;
+      --color-border: #E2E8F0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--color-bg);
+      color: var(--color-text-dark);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* SIDEBAR SYSTEM */
+    aside {
+      width: 260px;
+      background-color: var(--color-white);
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #EDF2F7;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 48px;
+    }
+
+    .logo-badge {
+      background-color: var(--color-yellow);
+      color: var(--color-white);
+      font-weight: 900;
+      font-size: 24px;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-text h1 {
+      color: var(--color-red);
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .logo-text span {
+      color: var(--color-text-muted);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-top: 4px;
+    }
+
+    nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      color: #4A5568;
+      transition: background 0.2s;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      background-color: #F7FAFC;
+    }
+    
+    .nav-link.sidebar-highlight {
+      color: var(--color-white);
+      background-color: var(--color-red);
+      border-radius: 9999px;
+      box-shadow: 0 4px 12px rgba(214, 28, 28, 0.2);
+    }
+    .nav-link.sidebar-highlight:hover {
+      background-color: var(--color-red);
+    }
+
+    /* MAIN VIEWPORT */
+    main {
+      flex-grow: 1;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h2 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1A202C;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .search-wrapper {
+      position: relative;
+      width: 320px;
+    }
+
+    .search-wrapper i {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-text-muted);
+    }
+
+    .search-wrapper input {
+      width: 100%;
+      background-color: var(--color-white);
+      border: 1px solid var(--color-border);
+      border-radius: 9999px;
+      padding: 10px 16px 10px 44px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      background-color: var(--color-red);
+      color: var(--color-white);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .panel-container {
+      background-color: var(--color-white);
+      border: 1px solid #EDF2F7;
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+
+    /* INTERNAL SEGMENT CONTROL TABS */
+    .tab-bar {
+      background-color: #F7FAFC;
+      padding: 6px;
+      border-radius: 16px;
+      display: flex;
+      max-width: 500px;
+      margin: 0 auto 32px auto;
+      border: 1px solid #EDF2F7;
+    }
+
+    .tab-btn {
+      flex: 1;
+      border: none;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      background: transparent;
+      color: #718096;
+      transition: all 0.15s;
+    }
+
+    .tab-btn.active {
+      background-color: var(--color-white);
+      color: var(--color-red);
+      font-weight: 700;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+
+    .view-content {
+      max-width: 950px;
+      margin: 0 auto;
+    }
+
+    /* INPUT ARCHITECTURE ELEMENTS */
+    .form-grid-3 {
+      display: grid;
+      grid-template-columns: 5fr 3fr 4fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+    }
+
+    .form-group input, .form-group select {
+      border: 1px solid #CBD5E0;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    /* TAG SELECTION CHIPS */
+    .tag-container-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      margin-bottom: 10px;
+    }
+
+    .tag-chips-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .tag-chip {
+      background-color: #F7FAFC;
+      border: 1px solid #E2E8F0;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #4A5568;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .tag-chip:hover {
+      background-color: #EDF2F7;
+    }
+
+    .tag-chip.selected {
+      background-color: rgba(249, 195, 44, 0.15);
+      border-color: var(--color-yellow);
+      color: #744210;
+      font-weight: 600;
+    }
+
+    /* VOICE COMMAND PORT INTERFACE */
+    .speech-container {
+      background-color: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .speech-info h4 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .speech-info p {
+      font-size: 13px;
+      color: #718096;
+    }
+
+    .speech-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      margin-top: 6px;
+    }
+
+    .speech-status .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #CBD5E0;
+    }
+
+    .speech-container.listening .speech-status { color: var(--color-red); }
+    .speech-container.listening .speech-status .dot {
+      background-color: var(--color-red);
+      animation: pulse-dot 1.2s infinite ease-in-out;
+    }
+
+    .mic-button {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: var(--color-red);
+      border: none;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(214, 28, 28, 0.25);
+    }
+
+    /* UPLOAD DRAG BOX ZONE */
+    .upload-zone {
+      border: 2px dashed #CBD5E0;
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: rgba(247, 250, 252, 0.5);
+      cursor: pointer;
+    }
+
+    .upload-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .upload-left i {
+      font-size: 32px;
+      color: var(--color-text-muted);
+    }
+
+    .upload-text p:first-child {
+      font-weight: 700;
+      font-size: 14px;
+      color: #4A5568;
+    }
+
+    .upload-text p:last-child {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      margin-top: 2px;
+    }
+
+    .upload-btn {
+      background-color: var(--color-white);
+      border: 1px solid #CBD5E0;
+      color: #4A5568;
+      padding: 10px 20px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      padding-top: 32px;
+    }
+
+    .btn-cancel {
+      background-color: var(--color-white);
+      border: 1px solid #CBD5E0;
+      color: #4A5568;
+      font-weight: 600;
+      font-size: 13px;
+      padding: 12px 32px;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .btn-save {
+      background-color: var(--color-yellow);
+      border: none;
+      color: #1A202C;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 12px 32px;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .btn-save:hover { background-color: var(--color-yellow-hover); }
+
+    /* MENU INVENTORY DATA LIST TABLE Layout */
+    .table-responsive {
+      overflow-x: auto;
+      border-radius: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th {
+      padding: 16px 20px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #4A5568;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border-bottom: 2px solid #FFF5D6;
+      background-color: #FFFDF7;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #EDF2F7;
+      font-size: 14px;
+      color: #4A5568;
+    }
+
+    td {
+      padding: 18px 20px;
+      vertical-align: middle;
+    }
+
+    .item-name {
+      font-weight: 600;
+      color: #1A202C;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      background-color: #E6F7ED;
+      color: #24A148;
+    }
+
+    .btn-table-action {
+      background: none;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-table-action.edit { color: #3182CE; margin-right: 8px;}
+    .btn-table-action.del { color: var(--color-red); }
+
+    /* INLINE EDIT MODE SUB-ELEMENT INPUTS */
+    .inline-edit-input {
+      width: 100%;
+      border: 1px solid #CBD5E0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+    }
+    .inline-edit-select {
+      width: 100%;
+      border: 1px solid #CBD5E0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      background-color: white;
+      outline: none;
+    }
+
+    /* INLINE ACTION BUTTONS */
+    .btn-inline-save {
+      background-color: var(--color-yellow);
+      border: none;
+      color: #1A202C;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 6px;
+    }
+    .btn-inline-cancel {
+      background-color: transparent;
+      border: 1px solid #CBD5E0;
+      color: #718096;
+      font-weight: 600;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* DIALOG OVERLAY MODALS */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-box {
+      background-color: var(--color-white);
+      padding: 32px;
+      border-radius: 16px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .modal-box h3 { font-size: 18px; margin-bottom: 12px; }
+    .modal-box p { font-size: 14px; color: #718096; margin-bottom: 24px; }
+
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  </style>
+</head>
+<body>
+
+  <aside>
+    <div class="logo-container">
+      <div class="logo-badge">S'</div>
+      <div class="logo-text">
+        <h1>SpeakNSave</h1>
+        <span>ADMIN PANEL</span>
+      </div>
+    </div>
+    <nav>
+      <a href="#" class="nav-link">Dashboard</a>
+      <a href="#" id="sidebarInventory" class="nav-link sidebar-highlight">Inventory</a>
+      <a href="#" class="nav-link">Logs</a>
+    </nav>
+  </aside>
+
+  <main>
+    <header>
+      <h2>Menu Inventory</h2>
+      <div class="header-actions">
+        <div class="search-wrapper">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search menu, promos, orders...">
+        </div>
+        <div class="user-avatar">
+          <i class="fa-solid fa-user"></i>
+        </div>
+      </div>
+    </header>
+
+    <div class="panel-container">
+      
+      <div class="tab-bar">
+        <button onclick="switchTab('add')" class="tab-btn active" id="tabBarBtnAdd">Add Menu Item</button>
+        <button onclick="switchTab('list')" class="tab-btn" id="tabBarBtnList">Menu List</button>
+      </div>
+
+      <div id="addTab" class="view-content">
+        <form id="adminForm" onsubmit="saveNewItem(event)">
+          
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label>Menu Name</label>
+              <input type="text" id="item_name" placeholder="Cheesy Burger Supreme">
+            </div>
+            <div class="form-group">
+              <label>Price (₱)</label>
+              <input type="text" id="price" placeholder="125">
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="status">
+                <option value="Active">Active</option>
+                <option value="Sold Out">Sold Out</option>
+                <option value="Phased Out">Phased Out</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label>Category</label>
+              <select id="category">
+                <option value="Burgers">Burgers</option>
+                <option value="Drinks">Drinks</option>
+                <option value="Sides">Sides</option>
+                <option value="Combo Meals">Combo Meals</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Promo Availability</label>
+              <input type="text" id="promo_details" placeholder="Discount Combo">
+            </div>
+          </div>
+
+          <div class="tag-container-label">AI Recommendation Tags</div>
+          <div class="tag-chips-wrapper" id="recommendationTags">
+            <div class="tag-chip" onclick="toggleTagChip(this)">Limited-Time Offer</div>
+            <div class="tag-chip" onclick="toggleTagChip(this)">Discounted Meal</div>
+            <div class="tag-chip" onclick="toggleTagChip(this)">Bundle Deals</div>
+            <div class="tag-chip" onclick="toggleTagChip(this)">Best Seller</div>
+            <div class="tag-chip" onclick="toggleTagChip(this)">Top Favorite</div>
+            <div class="tag-chip" onclick="toggleTagChip(this)">Featured Promo</div>
+            <div class="tag-chip" onclick="toggleTagChip(this)">Student Favorite</div>
+            <div class="tag-chip" onclick="toggleTagChip(this)">Birthday Promo</div>
+            <div class="tag-chip" onclick="toggleTagChip(this)">Sulit Meals</div>
+          </div>
+
+          <div class="speech-container" id="speech-wrapper">
+            <div class="speech-info">
+              <h4>Voice Item Creation</h4>
+              <p>Click the mic button and state your configuration parameter strings clearly.</p>
+              <div class="speech-status">
+                <div class="dot"></div>
+                <span id="status-text">Microphone Ready</span>
+              </div>
+            </div>
+            <button type="button" id="mic-btn" onclick="startAdminVoice()" class="mic-button">
+              <i class="fa-solid fa-microphone"></i>
+            </button>
+          </div>
+
+          <div class="upload-zone" onclick="document.getElementById('image').click()">
+            <div class="upload-left">
+              <i class="fa-regular fa-image"></i>
+              <div class="upload-text">
+                <p>Upload Menu Image</p>
+                <p>Drag and drop or browse files</p>
+              </div>
+            </div>
+            <button type="button" class="upload-btn">Choose Image</button>
+          </div>
+          <input type="file" id="image" accept="image/*" style="display: none;">
+          
+          <div id="imagePreview" style="margin-top: 12px;"></div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" onclick="document.getElementById('adminForm').reset();">Cancel</button>
+            <button type="submit" class="btn-save">Save Item</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="listTab" class="view-content" style="display: none;">
+        <div class="table-responsive">
+          <table id="inventoryTable">
+            <thead>
+              <tr>
+                <th style="width: 30%;">Menu Item</th>
+                <th style="width: 15%;">Category</th>
+                <th style="width: 15%;">Price</th>
+                <th style="width: 15%;">Status</th>
+                <th style="width: 13%;">Promo</th>
+                <th style="width: 12%;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <div id="deleteModal" class="modal-overlay">
+    <div class="modal-box">
+      <h3>Confirm Removals</h3>
+      <p id="deleteMessage">Are you sure you want to delete this menu record item?</p>
+      <div class="modal-footer">
+        <button type="button" id="cancelDelete" class="btn-cancel">Cancel</button>
+        <button type="button" id="confirmDelete" class="btn-save" style="background-color: var(--color-red); color: white;">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Mock local global dynamic inventory repository item objects state initialization
+    let inventoryState = [
+      { id: 1, name: "Cheeseburger Deal", category: "Burgers", price: "125", status: "Active", promo: "LTO" },
+      { id: 2, name: "Cheeseburger Deal", category: "Burgers", price: "125", status: "Active", promo: "LTO" },
+      { id: 3, name: "Cheeseburger Deal", category: "Burgers", price: "125", status: "Active", promo: "LTO" }
+    ];
+    
+    let deleteIdTarget = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderInventoryTable();
+      
+      // Initialize handling system for uploaded image preview stream loop properties
+      const imageInput = document.getElementById("image");
+      const preview = document.getElementById("imagePreview");
+      
+      imageInput.addEventListener("change", function() {
+        const file = this.files[0];
+        preview.innerHTML = "";
+        if (file) {
+          const img = document.createElement("img");
+          img.src = URL.createObjectURL(file);
+          img.style.width = "80px"; img.style.height = "80px";
+          img.style.objectFit = "cover"; img.style.borderRadius = "8px";
+          preview.appendChild(img);
+          speak("Image selected");
+        }
+      });
+    });
+
+    // Toggle Tag Select Recommendation Chips
+    function toggleTagChip(chip) {
+      chip.classList.toggle('selected');
+    }
+
+    // Dynamic rendering layout logic supporting runtime switching to editable inner cell view rows
+    function renderInventoryTable() {
+      const tbody = document.querySelector("#inventoryTable tbody");
+      tbody.innerHTML = "";
+
+      inventoryState.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.setAttribute("id", `row-${item.id}`);
+
+        if (item.isEditing) {
+          // ==========================================================
+          // INLINE EDIT MODE (Matches wireframe layout logic layout specs)
+          // ==========================================================
+          tr.innerHTML = `
+            <td class="item-name">${item.name}</td>
+            <td>${item.category}</td>
+            <td>
+              <input type="text" class="inline-edit-input" id="edit-price-${item.id}" value="${item.price}" style="width: 80px;">
+            </td>
+            <td>
+              <select class="inline-edit-select" id="edit-status-${item.id}" style="width: 110px;">
+                <option value="Active" ${item.status === 'Active' ? 'selected' : ''}>Active</option>
+                <option value="Sold Out" ${item.status === 'Sold Out' ? 'selected' : ''}>Sold Out</option>
+                <option value="Phased Out" ${item.status === 'Phased Out' ? 'selected' : ''}>Phased Out</option>
+              </select>
+            </td>
+            <td>${item.promo}</td>
+            <td>
+              <div style="display: flex; align-items: center;">
+                <button type="button" class="btn-inline-save" onclick="saveInlineRow(${item.id})">Save</button>
+                <button type="button" class="btn-inline-cancel" onclick="cancelInlineRow(${item.id})">×</button>
+              </div>
+            </td>
+          `;
+        } else {
+          // ==========================================================
+          // DEFAULT ROW VIEW RENDERING MATRIX DISPLAY MODE
+          // ==========================================================
+          tr.innerHTML = `
+            <td class="item-name">${item.name}</td>
+            <td>${item.category}</td>
+            <td>P${item.price}</td>
+            <td><span class="status-pill">${item.status}</span></td>
+            <td>${item.promo}</td>
+            <td>
+              <button type="button" class="btn-table-action edit" onclick="enterInlineEditMode(${item.id})">Edit</button>
+              <button type="button" class="btn-table-action del" onclick="triggerDelete(${item.id})">Del</button>
+            </td>
+          `;
+        }
+        tbody.appendChild(tr);
+      });
+    }
+
+    // State action transitions management handles
+    function enterInlineEditMode(id) {
+      inventoryState = inventoryState.map(item => item.id === id ? { ...item, isEditing: true } : item);
+      renderInventoryTable();
+    }
+
+    function cancelInlineRow(id) {
+      inventoryState = inventoryState.map(item => item.id === id ? { ...item, isEditing: false } : item);
+      renderInventoryTable();
+    }
+
+    function saveInlineRow(id) {
+      const updatedPrice = document.getElementById(`edit-price-${id}`).value.trim();
+      const updatedStatus = document.getElementById(`edit-status-${id}`).value;
+
+      inventoryState = inventoryState.map(item => {
+        if (item.id === id) {
+          return { ...item, price: updatedPrice, status: updatedStatus, isEditing: false };
+        }
+        return item;
+      });
+
+      speak("Record item changes updated successfully");
+      renderInventoryTable();
+    }
+
+    // Create item records append tracking handling mechanisms
+    function saveNewItem(e) {
+      e.preventDefault();
+      const name = document.getElementById("item_name").value.trim() || "Unnamed Menu Item";
+      const price = document.getElementById("price").value.trim() || "0";
+      const status = document.getElementById("status").value;
+      const category = document.getElementById("category").value;
+      const promo = document.getElementById("promo_details").value.trim() || "None";
+
+      const newItem = {
+        id: Date.now(),
+        name: name,
+        category: category,
+        price: price,
+        status: status,
+        promo: promo
+      };
+
+      inventoryState.push(newItem);
+      document.getElementById("adminForm").reset();
+      document.getElementById("imagePreview").innerHTML = "";
+      
+      // Clear Recommendation Chips active modifiers styles
+      document.querySelectorAll('.tag-chip').forEach(chip => chip.classList.remove('selected'));
+      
+      renderInventoryTable();
+      speak("Item appended to store database configuration matrix");
+      switchTab('list');
+    }
+
+    // Modal popup confirmation delete dialog controllers
+    function triggerDelete(id) {
+      deleteIdTarget = id;
+      const targetItem = inventoryState.find(item => item.id === id);
+      document.getElementById("deleteMessage").innerText = `Are you sure you want to delete "${targetItem.name}"?`;
+      document.getElementById("deleteModal").style.display = "flex";
+    }
+
+    document.getElementById("cancelDelete").addEventListener("click", () => {
+      document.getElementById("deleteModal").style.display = "none";
+      deleteIdTarget = null;
+    });
+
+    document.getElementById("confirmDelete").addEventListener("click", () => {
+      if (deleteIdTarget !== null) {
+        inventoryState = inventoryState.filter(item => item.id !== deleteIdTarget);
+        renderInventoryTable();
+        speak("Item database entry removed");
+      }
+      document.getElementById("deleteModal").style.display = "none";
+      deleteIdTarget = null;
+    });
+
+    // Screen tab layer operational toggle logic interface controllers
+    function switchTab(tab) {
+      const addTab = document.getElementById("addTab");
+      const listTab = document.getElementById("listTab");
+      const btnAdd = document.getElementById("tabBarBtnAdd");
+      const btnList = document.getElementById("tabBarBtnList");
+
+      if (tab === "add") {
+        addTab.style.display = "block"; listTab.style.display = "none";
+        btnAdd.classList.add("active"); btnList.classList.remove("active");
+      } else {
+        addTab.style.display = "none"; listTab.style.display = "block";
+        btnList.classList.add("active"); btnAdd.classList.remove("active");
+      }
+    }
+
+    // =========================================================================
+    // SPEECH SYNTHESIS ENGINE & SPEECH VOICE RECOGNITION INTERACTION HANDLING MATRIX
+    // =========================================================================
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    let isListening = false;
+
+    window.startAdminVoice = function () {
+      const wrapper = document.getElementById('speech-wrapper');
+      const statusText = document.getElementById('status-text');
+      const micBtn = document.getElementById('mic-btn');
+
+      if (!SpeechRecognition) {
+        speak("Speech Recognition web browser features not detected inside your application execution workspace viewport module.");
+        return;
+      }
+
+      if (isListening) { recognition.stop(); return; }
+
+      recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+
+      recognition.onstart = function() {
+        isListening = true;
+        wrapper.classList.add('listening');
+        statusText.innerText = "Listening actively...";
+        micBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
+      };
+
+      recognition.onend = function() {
+        isListening = false;
+        wrapper.classList.remove('listening');
+        statusText.innerText = "Microphone Ready";
+        micBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+      };
+
+      recognition.onresult = function (event) {
+        const text = event.results[0][0].transcript.toLowerCase();
+        processVoice(text);
+      };
+
+      recognition.start();
+    };
+
+    function processVoice(text) {
+      if (text.includes("upload image")) {
+        speak("Choose image file");
+        document.getElementById("image").click();
+        return;
+      }
+
+      const price = text.match(/price\s+(\d+)/);
+      const category = text.match(/category\s+(.+?)(?=promo|status|$)/);
+      const promo = text.match(/promo\s+(.+?)(?=status|$)/);
+      const status = text.match(/status\s+(active|sold out|phased out)/);
+
+      if (text.includes("add")) {
+        if (text.includes("to menu")) {
+          speak("Processing menu serialization save operation pipelines");
+          document.getElementById("adminForm").dispatchEvent(new Event('submit'));
+          return;
+        }
+
+        let item = text.replace(/^add\s+/i, "").replace(/price.+/i, "").replace(/category.+/i, "").replace(/promo.+/i, "").replace(/status.+/i, "").replace(/\s+/g, " ").trim();
+        if (item) document.getElementById("item_name").value = item;
+      }
+
+      if (price) document.getElementById("price").value = price[1];
+      if (category) {
+        const catSelect = document.getElementById("category");
+        for (let opt of catSelect.options) {
+          if (opt.value.toLowerCase() === category[1].trim().toLowerCase()) { catSelect.value = opt.value; break; }
+        }
+      }
+      if (promo) document.getElementById("promo_details").value = promo[1].trim();
+      if (status) {
+        const statSelect = document.getElementById("status");
+        for (let opt of statSelect.options) {
+          if (opt.value.toLowerCase() === status[1].trim().toLowerCase()) { statSelect.value = opt.value; break; }
+        }
+      }
+
+      speak("Fields updated from speech input stream");
+    }
+
+    function speak(msg) {
+      const speech = new SpeechSynthesisUtterance(msg);
+      speech.lang = "en-US";
+      window.speechSynthesis.speak(speech);
+    }
+  </script>
+</body>
+</html>

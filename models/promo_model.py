@@ -1,31 +1,60 @@
-from database.db_connection import conn
+from database.db_connection import db_connection
+
 
 def get_promos_by_budget(budget):
+
+    conn = db_connection()
     cursor = conn.cursor()
+
     query = "SELECT * FROM promos WHERE price <= %s"
+
     cursor.execute(query, (budget,))
     promos = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
     return promos
+
 
 def get_promos_by_category(category):
+
+    conn = db_connection()
     cursor = conn.cursor()
+
     query = "SELECT * FROM promos WHERE LOWER(category) = LOWER(%s)"
+
     cursor.execute(query, (category,))
     promos = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
     return promos
 
+
 def get_all_promos():
+
+    conn = db_connection()
     cursor = conn.cursor()
+
     query = """
         SELECT id, name, category, price, description, promo_details, status, image_url
         FROM promos
     """
+
     cursor.execute(query)
     promos = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
     return promos
+
 
 def get_promos_by_category_and_budget(category, budget):
 
+    conn = db_connection()
     cursor = conn.cursor()
 
     query = """
@@ -35,38 +64,46 @@ def get_promos_by_category_and_budget(category, budget):
     """
 
     cursor.execute(query, (category, budget))
-
     promos = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
 
     return promos
 
+
 def add_menu_item(name, price, category, promo_details, status, image_url):
+
+    conn = db_connection()
     cursor = conn.cursor()
-    
+
     query = """
         INSERT INTO promos
         (name, price, category, description, promo_details, status, image_url)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
-    
-    # Create a description 
+
     description = f"Delicious {name} promo! Save big on this tasty offer."
-    
+
     cursor.execute(query, (
         name,
         price,
         category,
-        description,  # Add this field
+        description,
         promo_details,
         status,
         image_url
     ))
-    
+
     conn.commit()
+
+    cursor.close()
+    conn.close()
 
 
 def update_price(item_id, new_price):
 
+    conn = db_connection()
     cursor = conn.cursor()
 
     query = """
@@ -79,9 +116,13 @@ def update_price(item_id, new_price):
 
     conn.commit()
 
+    cursor.close()
+    conn.close()
+
 
 def update_status(item_id, status):
 
+    conn = db_connection()
     cursor = conn.cursor()
 
     query = """
@@ -94,10 +135,59 @@ def update_status(item_id, status):
 
     conn.commit()
 
+    cursor.close()
+    conn.close()
+
 
 def delete_menu_item(item_id):
+
+    conn = db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("DELETE FROM promos WHERE id = %s", (item_id,))
+    cursor.execute(
+        "DELETE FROM promos WHERE id = %s",
+        (item_id,)
+    )
 
     conn.commit()
+
+    cursor.close()
+    conn.close()
+
+
+def update_item_details(
+    item_id,
+    item_name,
+    category,
+    price,
+    promo_details,
+    status
+):
+
+    conn = db_connection()
+    cursor = conn.cursor()
+
+    query = """
+        UPDATE promos
+        SET
+            name = %s,
+            category = %s,
+            price = %s,
+            promo_details = %s,
+            status = %s
+        WHERE id = %s
+    """
+
+    cursor.execute(query, (
+        item_name,
+        category,
+        price,
+        promo_details,
+        status,
+        item_id
+    ))
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()

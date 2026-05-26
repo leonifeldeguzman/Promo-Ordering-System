@@ -1,5 +1,5 @@
-from unicodedata import category
 import os
+
 from werkzeug.utils import secure_filename
 from flask import Blueprint, jsonify, request, redirect, render_template, session
 from models.promo_model import (
@@ -12,6 +12,7 @@ from models.promo_model import (
     update_status,
     delete_menu_item
 )
+from models.promo_model import update_item_details
 
 promo_routes = Blueprint('promo_routes', __name__)
 
@@ -94,17 +95,18 @@ def category_budget_promos(category, budget):
 
 @promo_routes.route('/admin')
 def admin_page():
-
     if not session.get('admin_logged_in'):
         return redirect('/admin-login')
 
     results = get_all_promos()
 
+    username = session.get('admin_logged_in')  # 👈 ADD THIS
+
     return render_template(
         'admin.html',
-        items=results
+        items=results,
+        username=username   # 👈 ADD THIS
     )
-
 
 # =========================
 # ADD ITEM
@@ -184,6 +186,27 @@ def delete_item(item_id):
     delete_menu_item(item_id)
     return redirect('/admin')
 
+@promo_routes.route("/update-item/<int:item_id>", methods=["POST"])
+def update_item(item_id):
+
+    data = request.get_json()
+
+    name = data.get("name")
+    category = data.get("category")
+    price = data.get("price")
+    status = data.get("status")
+    promo = data.get("promo")
+
+    update_item_details(
+        item_id,
+        name,
+        category,
+        price,
+        promo,
+        status
+    )
+
+    return jsonify({"success": True})
 # =========================
 # ADMIN LOGIN PAGE
 # =========================
@@ -207,7 +230,7 @@ def admin_login():
     # SIMPLE HARDCODED LOGIN
     if username == "admin" and password == "admin123":
 
-        session['admin_logged_in'] = True
+        session['admin_logged_in'] = username
 
         return redirect('/admin')
 
