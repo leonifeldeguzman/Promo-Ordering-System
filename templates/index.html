@@ -197,23 +197,72 @@ function initializeCarousel() {
             const budget = numbers ? numbers[0] : null;
 
             let category = '';
-            if (text.includes('chicken'))  category = 'Chicken';
-            else if (text.includes('burger')) category = 'Burger';
-            else if (text.includes('fries'))  category = 'Fries';
-            else if (text.includes('rice'))   category = 'Rice Meal';
-            else if (text.includes('drink'))  category = 'Drinks';
-            else if (text.includes('dessert'))  category = 'Dessert';
-             else if (text.includes('Combo Meal'))  category = 'Combo Meal';
 
+            if (
+                text.includes('burger fries') ||
+                text.includes('burger and fries') ||
+                text.includes('burger with fries') ||
+                text.includes('burger combo') ||
+                (
+                    text.includes('burger') &&
+                    text.includes('fries')
+                )
+            ){
+                category = 'Combo Meal';
+            }
+
+            else if (text.includes('combo meal')) {
+                category = 'Combo Meal';
+            }
+
+            else if (text.includes('birthday package')) {
+                category = 'Birthday Packages';
+            }
+
+            /* -------- GENERAL FOOD TYPES -------- */
+
+            else if (text.includes('chicken')) {
+                category = 'Chicken';
+            }
+
+            else if (text.includes('burger')) {
+                category = 'Burger';
+            }
+
+            else if (text.includes('fries')) {
+                category = 'Fries';
+            }
+
+            else if (text.includes('rice')) {
+                category = 'Rice Meal';
+            }
+
+            else if (text.includes('drink')) {
+                category = 'Drinks';
+            }
+
+            else if (text.includes('dessert')) {
+                category = 'Dessert';
+            }
 
             let url = '';
-            if (category && budget)  url = `/promos/${category}/${budget}`;
-            else if (category)        url = `/promos/category/${category}`;
-            else if (budget)          url = `/promos/budget/${budget}`;
-            else                      url = `/promos`;
+
+            if (category && budget)
+                url = `/promos/${category}/${budget}`;
+
+            else if (category)
+                url = `/promos/category/${category}`;
+
+            else if (budget)
+                url = `/promos/budget/${budget}`;
+
+            else
+                url = `/promos`;
 
             return url;
         }
+
+         
 
         function startVoiceRecognition() {
             if (!SpeechRecognition) {

@@ -3,6 +3,203 @@
 <head>
     <title>Admin Panel</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+
+const SpeechRecognition =
+window.SpeechRecognition ||
+window.webkitSpeechRecognition;
+
+let recognition;
+
+function startAdminVoice(){
+
+    recognition =
+    new SpeechRecognition();
+
+    recognition.lang='en-US';
+
+    recognition.start();
+
+    recognition.onresult=function(event){
+
+        const text=
+        event.results[0][0]
+        .transcript
+        .toLowerCase();
+
+        console.log(text);
+
+        processVoice(text);
+
+    };
+
+}
+
+function processVoice(text){
+
+    /* upload image command */
+
+    if(text.includes("upload image")){
+
+        speak("Choose image file");
+
+        document
+        .getElementById("image")
+        .click();
+
+        return;
+    }
+
+    /* extract values */
+
+    const price =
+    text.match(/price\s+(\d+)/);
+
+    const category =
+    text.match(/category\s+(.+?)(?=promo|status|$)/);
+
+    const promo =
+    text.match(/promo\s+(.+?)(?=status|$)/);
+
+    const status =
+    text.match(
+    /status\s+(active|sold out|phased out)/
+    );
+
+  let item='';
+
+if(text.includes("add")){
+
+    /* ACTION ONLY: don't modify item name */
+    if(text.includes("to menu")){
+
+        speak("Adding item to menu");
+
+        document
+        .getElementById("adminForm")
+        .submit();
+
+        return;
+    }
+
+    /* Only set item name when NOT a menu action */
+    item = text
+        .replace(/^add\s+/i,"")
+        .replace(/price.+/i,"")
+        .replace(/category.+/i,"")
+        .replace(/promo.+/i,"")
+        .replace(/status.+/i,"")
+        .replace(/\s+/g," ")
+        .trim();
+
+    if(item !== ''){
+
+        document
+        .getElementById("item_name")
+        .value=item;
+    }
+}
+
+    if(price){
+
+        document
+        .getElementById("price")
+        .value=price[1];
+
+    }
+
+    if(category){
+
+        document
+        .getElementById("category")
+        .value=
+        category[1].trim();
+
+    }
+
+    if(promo){
+
+        document
+        .getElementById("promo_details")
+        .value=
+        promo[1].trim();
+
+    }
+
+    if(status){
+
+        document
+        .getElementById("status")
+        .value=
+        capitalize(status[1]);
+
+    }
+
+    /* wait if image missing */
+
+    const imageInput =
+    document.getElementById("image");
+
+    if(imageInput.files.length===0){
+
+        speak(
+        "Say upload image if you want to add a picture"
+        );
+
+        return;
+    }
+
+    /* auto add */
+
+    speak(
+    "Adding item to menu"
+    );
+
+    document
+    .getElementById("adminForm")
+    .submit();
+
+}
+
+function capitalize(str){
+
+    return str.replace(
+    /\b\w/g,
+    c=>c.toUpperCase()
+    );
+
+}
+
+function speak(message){
+
+    let speech=
+    new SpeechSynthesisUtterance(
+    message
+    );
+
+    speech.lang='en-US';
+
+    speechSynthesis.speak(
+    speech
+    );
+
+}
+
+/* submit automatically once image chosen */
+
+document
+.getElementById("image")
+.addEventListener(
+"change",
+function(){
+
+document
+.getElementById("adminForm")
+.submit();
+
+});
+
+</script>
 </head>
 <body>
 <a href="/logout">
@@ -12,27 +209,49 @@
 
     <h2>Add Menu Item</h2>
 
-    <form action="/add-item" method="POST"  enctype="multipart/form-data">
+   <form id="adminForm"
+      action="/add-item"
+      method="POST"
+      enctype="multipart/form-data">
 
-        <input type="text" name="item_name" placeholder="Item Name" required>
+    <input id="item_name"
+           type="text"
+           name="item_name"
+           placeholder="Item Name"
+           required>
 
-        <input type="number" step="0.01" name="price" placeholder="Price" required>
+    <input id="price"
+           type="number"
+           step="0.01"
+           name="price"
+           placeholder="Price"
+           required>
 
-        <input type="text" name="category" placeholder="Category">
+    <input id="category"
+           type="text"
+           name="category"
+           placeholder="Category">
 
-        <input type="text" name="promo_details" placeholder="Promo Details">
-        <input type="file"
-       name="image">
+    <input id="promo_details"
+           type="text"
+           name="promo_details"
+           placeholder="Promo Details">
 
-        <select name="status">
-            <option value="Active">Active</option>
-            <option value="Phased Out">Phased Out</option>
-            <option value="Sold Out">Sold Out</option>
-        </select>
+    <input id="image"
+           type="file"
+           name="image">
 
-        <button type="submit">Add Item</button>
+    <select id="status" name="status">
+        <option value="Active">Active</option>
+        <option value="Phased Out">Phased Out</option>
+        <option value="Sold Out">Sold Out</option>
+    </select>
 
-    </form>
+</form>
+
+<button onclick="startAdminVoice()">
+    🎤 Voice Add
+</button>
 
     <hr>
 
