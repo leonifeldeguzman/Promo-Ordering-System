@@ -1,54 +1,57 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SpeakNSave — Voice Assistant</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
     <script>
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        let recognition = null;
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      let recognition = null;
 
-        function updateStatus(text, isActive) {
-            const bar = document.getElementById('statusBar');
-            const barText = document.getElementById('statusText');
-            const searchBar = document.getElementById('searchBarWrapper');
-            const micBtn = document.getElementById('micBtn');
+      function updateStatus(text, isActive) {
+        const bar = document.getElementById("statusBar");
+        const barText = document.getElementById("statusText");
+        const searchBar = document.getElementById("searchBarWrapper");
+        const micBtn = document.getElementById("micBtn");
 
-            barText.textContent = text;
+        barText.textContent = text;
 
-            if (isActive) {
-                bar.classList.remove('hidden');
-                searchBar.classList.add('hidden');
-                micBtn.classList.add('listening');
-            } else {
-                bar.classList.add('hidden');
-                searchBar.classList.remove('hidden');
-                micBtn.classList.remove('listening');
-            }
+        if (isActive) {
+          bar.classList.remove("hidden");
+          searchBar.classList.add("hidden");
+          micBtn.classList.add("listening");
+        } else {
+          bar.classList.add("hidden");
+          searchBar.classList.remove("hidden");
+          micBtn.classList.remove("listening");
         }
+      }
 
-        function setSearchText(text) {
-            document.getElementById('searchInput').value = text;
-            if (text) {
-                document.getElementById('searchBar').classList.add('active');
-            } else {
-                document.getElementById('searchBar').classList.remove('active');
-            }
+      function setSearchText(text) {
+        document.getElementById("searchInput").value = text;
+        if (text) {
+          document.getElementById("searchBar").classList.add("active");
+        } else {
+          document.getElementById("searchBar").classList.remove("active");
         }
+      }
 
-       async function fetchAndRender(url) {
+      async function fetchAndRender(url) {
         try {
-        const response = await fetch(url);
-        const data = await response.json();
+          const response = await fetch(url);
+          const data = await response.json();
 
-        const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = '';
+          const resultsDiv = document.getElementById("results");
+          resultsDiv.innerHTML = "";
 
-        let reply = '';
+          let reply = "";
 
-        if (!data || data.length === 0) {
-
+          if (!data || data.length === 0) {
             resultsDiv.innerHTML = `
                 <div class="results-header">
                     <h2>OTHER OPTIONS</h2>
@@ -60,25 +63,25 @@
                 </p>
             `;
 
-            reply = 'Sorry, no promos found.';
-        }
-
-        else {
-
+            reply = "Sorry, no promos found.";
+          } else {
             reply = `I found ${data.length} promos for you.`;
 
-            let cardsHTML = '';
+            let cardsHTML = "";
 
             data.forEach((promo, index) => {
-
-                cardsHTML += `
-                    <div class="carousel-card ${index === 1 ? 'active' : ''}">
+              cardsHTML += `
+                    <div class="carousel-card ${index === 0 ? "active" : ""}">
                         
                         <div class="promo-image">
-                          <img src="/static/${promo.image}" alt="${promo.name}">
+                          ${
+                            promo.image_url
+                              ? `<img src="/static/${promo.image_url}" alt="${promo.name}">`
+                              : ""
+                          }
                             
                             <span class="promo-tag">
-                                ${promo.tag || 'Promo'}
+                                ${promo.tag || "Promo"}
                             </span>
                         </div>
 
@@ -102,9 +105,7 @@
 
                     </div>
                 `;
-                
             });
-            
 
             resultsDiv.innerHTML = `
                 <div class="results-wrapper">
@@ -148,243 +149,219 @@
                 </div>
             `;
             initializeCarousel();
+          }
+
+          const speech = new SpeechSynthesisUtterance(reply);
+          speech.lang = "en-US";
+
+          window.speechSynthesis.speak(speech);
+        } catch (err) {
+          console.error(err);
         }
+      }
+      function initializeCarousel() {
+        const track = document.querySelector(".carousel-track");
 
-        const speech = new SpeechSynthesisUtterance(reply);
-        speech.lang = 'en-US';
+        const leftBtn = document.querySelector(".carousel-btn.left");
 
-        window.speechSynthesis.speak(speech);
+        const rightBtn = document.querySelector(".carousel-btn.right");
 
-    } catch (err) {
-        console.error(err);
-    }
-}
-function initializeCarousel() {
+        if (!track || !leftBtn || !rightBtn) return;
 
-    const track = document.querySelector('.carousel-track');
+        const scrollAmount = 320;
 
-    const leftBtn = document.querySelector('.carousel-btn.left');
-
-    const rightBtn = document.querySelector('.carousel-btn.right');
-
-    if (!track || !leftBtn || !rightBtn) return;
-
-    const scrollAmount = 320;
-
-    rightBtn.addEventListener('click', () => {
-
-        track.scrollBy({
+        rightBtn.addEventListener("click", () => {
+          track.scrollBy({
             left: scrollAmount,
-            behavior: 'smooth'
+            behavior: "smooth",
+          });
         });
 
-    });
-
-    leftBtn.addEventListener('click', () => {
-
-        track.scrollBy({
+        leftBtn.addEventListener("click", () => {
+          track.scrollBy({
             left: -scrollAmount,
-            behavior: 'smooth'
+            behavior: "smooth",
+          });
         });
+      }
 
-    });
+      function processQuery(transcript) {
+        const text = transcript.toLowerCase().trim();
 
-}
+        const budgetData = extractBudget(text);
+        const budget = budgetData.value;
+        const budgetType = budgetData.type;
 
-        function processQuery(transcript) {
-            const text = transcript.toLowerCase();
-            const numbers = text.match(/\d+/);
-            const budget = numbers ? numbers[0] : null;
+        let cleanText = text
+          .replace(/below|under|less than|above|over|more than/g, "")
+          .replace(/\d+/g, "")
+          .replace(/suggest|show me|please|promo(s)?/g, "")
+          .trim();
 
-            let category = '';
+        let url = "";
 
-            if (
-                text.includes('burger fries') ||
-                text.includes('burger and fries') ||
-                text.includes('burger with fries') ||
-                text.includes('burger combo') ||
-                (
-                    text.includes('burger') &&
-                    text.includes('fries')
-                )
-            ){
-                category = 'Combo Meal';
-            }
-
-            else if (text.includes('combo meal')) {
-                category = 'Combo Meal';
-            }
-
-            else if (text.includes('birthday package')) {
-                category = 'Birthday Packages';
-            }
-
-            /* -------- GENERAL FOOD TYPES -------- */
-
-            else if (text.includes('chicken')) {
-                category = 'Chicken';
-            }
-
-            else if (text.includes('burger')) {
-                category = 'Burger';
-            }
-
-            else if (text.includes('fries')) {
-                category = 'Fries';
-            }
-
-            else if (text.includes('rice')) {
-                category = 'Rice Meal';
-            }
-
-            else if (text.includes('drink')) {
-                category = 'Drinks';
-            }
-
-            else if (text.includes('dessert')) {
-                category = 'Dessert';
-            }
-
-            let url = '';
-
-            if (category && budget)
-                url = `/promos/${category}/${budget}`;
-
-            else if (category)
-                url = `/promos/category/${category}`;
-
-            else if (budget)
-                url = `/promos/budget/${budget}`;
-
-            else
-                url = `/promos`;
-
-            return url;
+        if (budget) {
+          url = `/promos/search?q=${encodeURIComponent(cleanText)}&budget=${budget}&type=${budgetType}`;
+        } else {
+          url = `/promos/search?q=${encodeURIComponent(cleanText)}`;
         }
 
-         
+        return url;
+      }
 
-        function startVoiceRecognition() {
-            if (!SpeechRecognition) {
-                alert('Speech recognition is not supported in this browser.');
-                return;
-            }
+      function extractBudget(text) {
+        const number = text.match(/\d+/);
+        const value = number ? number[0] : null;
 
-            recognition = new SpeechRecognition();
-            recognition.lang = 'en-US';
-            recognition.interimResults = false;
+        let type = "exact";
 
-            updateStatus('Listening... Speak now', true);
-            setSearchText('');
-
-            recognition.onresult = async function(event) {
-                const transcript = event.results[0][0].transcript;
-                setSearchText(`"${transcript}"`);
-                updateStatus('', false);
-
-                const url = processQuery(transcript);
-                await fetchAndRender(url);
-            };
-
-            recognition.onerror = function(e) {
-                if (e.error === 'aborted' || e.error === 'no-speech') {
-                    updateStatus('', false);
-                    setSearchText('Cancelled. Tap to speak again.');
-                } else {
-                    updateStatus('', false);
-                    setSearchText('Voice error. Try again.');
-                }
-            };
-
-            recognition.onend = function() {
-                document.getElementById('micBtn').classList.remove('listening');
-            };
-
-            recognition.start();
+        if (
+          text.includes("below") ||
+          text.includes("under") ||
+          text.includes("less than")
+        ) {
+          type = "lte";
         }
 
-        function handleSearchSubmit() {
-            const text = document.getElementById('searchInput').value.trim();
-            if (!text) return;
-            const url = processQuery(text);
-            fetchAndRender(url);
+        if (
+          text.includes("above") ||
+          text.includes("over") ||
+          text.includes("more than")
+        ) {
+          type = "gte";
         }
 
-        function setPill(text) {
-            setSearchText(`"${text}"`);
-            const url = processQuery(text);
-            fetchAndRender(url);
+        return { value, type };
+      }
+
+      function startVoiceRecognition() {
+        if (!SpeechRecognition) {
+          alert("Speech recognition is not supported in this browser.");
+          return;
         }
+
+        recognition = new SpeechRecognition();
+        recognition.lang = "en-US";
+        recognition.interimResults = false;
+
+        updateStatus("Listening... Speak now", true);
+        setSearchText("");
+
+        recognition.onresult = async function (event) {
+          const transcript = event.results[0][0].transcript;
+          setSearchText(`"${transcript}"`);
+          updateStatus("", false);
+
+          const url = processQuery(transcript);
+          await fetchAndRender(url);
+        };
+
+        recognition.onerror = function (e) {
+          if (e.error === "aborted" || e.error === "no-speech") {
+            updateStatus("", false);
+            setSearchText("Cancelled. Tap to speak again.");
+          } else {
+            updateStatus("", false);
+            setSearchText("Voice error. Try again.");
+          }
+        };
+
+        recognition.onend = function () {
+          document.getElementById("micBtn").classList.remove("listening");
+        };
+
+        recognition.start();
+      }
+
+      function handleSearchSubmit() {
+        const text = document.getElementById("searchInput").value.trim();
+        if (!text) return;
+        const url = processQuery(text);
+        fetchAndRender(url);
+      }
+
+      function setPill(text) {
+        setSearchText(`"${text}"`);
+        const url = processQuery(text);
+        fetchAndRender(url);
+      }
     </script>
-</head>
-<body>
-
+  </head>
+  <body>
     <!-- NAVBAR -->
     <nav class="navbar">
-        <a href="/" class="navbar-brand">
-            <span class="brand-logo">S'</span>
-            <div class="brand-text-group">
-                <span class="brand-name">Speak<em>N</em>Save</span>
-                <span class="brand-sub">Voice Assistant</span>
-            </div>
-        </a>
-        <ul class="navbar-nav">
-            <li><a href="/">Home</a></li>
-            <li><a href="/voice-assistant" class="active">Recommendations</a></li>
-            <li><a href="/promos-page">Promos</a></li>
-            <li><a href="/admin-login">Admin Login</a></li>
-        </ul>
+      <a href="/" class="navbar-brand">
+        <span class="brand-logo">S'</span>
+        <div class="brand-text-group">
+          <span class="brand-name">Speak<em>N</em>Save</span>
+          <span class="brand-sub">Voice Assistant</span>
+        </div>
+      </a>
+      <ul class="navbar-nav">
+        <li><a href="/">Home</a></li>
+        <li><a href="/voice-assistant" class="active">Recommendations</a></li>
+        <li><a href="/promos-page">Promos</a></li>
+        <li><a href="/admin-login">Admin Login</a></li>
+      </ul>
     </nav>
 
     <!-- RED BG WRAPPER -->
     <div class="voice-page-body">
-        <div class="voice-card">
+      <div class="voice-card">
+        <!-- Globe icon (language toggle placeholder) -->
+        <button class="globe-btn" title="Language">🌐</button>
 
-            <!-- Globe icon (language toggle placeholder) -->
-            <button class="globe-btn" title="Language">🌐</button>
+        <h2>What do you want to eat?</h2>
 
-            <h2>What do you want to eat?</h2>
+        <!-- Mic button -->
+        <button
+          class="mic-circle-btn"
+          id="micBtn"
+          onclick="startVoiceRecognition()"
+          title="Tap to speak"
+        >
+          🎤
+        </button>
 
-            <!-- Mic button -->
-            <button class="mic-circle-btn" id="micBtn" onclick="startVoiceRecognition()" title="Tap to speak">
-                🎤
-            </button>
-
-            <!-- Default search bar (shown when NOT listening) -->
-            <div class="search-bar-wrapper" id="searchBarWrapper">
-                <div class="search-bar" id="searchBar">
-                    <span class="search-icon">🔍</span>
-                    <input
-                        type="text"
-                        id="searchInput"
-                        placeholder="Search here or tap the mic"
-                        onkeydown="if(event.key==='Enter') handleSearchSubmit()"
-                    >
-                    <button class="send-btn" onclick="handleSearchSubmit()">➤</button>
-                </div>
-            </div>
-
-            <!-- Listening / status bar (shown WHEN listening or after error) -->
-            <div class="status-bar hidden" id="statusBar">
-                <span class="kbd-icon">⌨️</span>
-                <span id="statusText">Listening... Speak now</span>
-            </div>
-
-            <!-- Suggestion pills -->
-            <div class="try-saying">
-                <p class="try-saying-label">Try saying:</p>
-                <div class="pills-row">
-                    <button class="pill-btn" onclick="setPill('Meals under P150')">"Meals under P150"</button>
-                    <button class="pill-btn" onclick="setPill('Chicken Promo')">"Chicken Promo"</button>
-                    <button class="pill-btn" onclick="setPill('Birthday Packages')">"Birthday Packages"</button>
-                </div>
-            </div>
-
-            <!-- Results area -->
-            <div id="results"></div>
-
+        <!-- Default search bar (shown when NOT listening) -->
+        <div class="search-bar-wrapper" id="searchBarWrapper">
+          <div class="search-bar" id="searchBar">
+            <span class="search-icon">🔍</span>
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Search here or tap the mic"
+              onkeydown="if (event.key === 'Enter') handleSearchSubmit();"
+            />
+            <button class="send-btn" onclick="handleSearchSubmit()">➤</button>
+          </div>
         </div>
-    </div>
 
-</body>
+        <!-- Listening / status bar (shown WHEN listening or after error) -->
+        <div class="status-bar hidden" id="statusBar">
+          <span class="kbd-icon">⌨️</span>
+          <span id="statusText">Listening... Speak now</span>
+        </div>
+
+        <!-- Suggestion pills -->
+        <div class="try-saying">
+          <p class="try-saying-label">Try saying:</p>
+          <div class="pills-row">
+            <button class="pill-btn" onclick="setPill('Meals under P150')">
+              "Meals under P150"
+            </button>
+            <button class="pill-btn" onclick="setPill('Chicken Promo')">
+              "Chicken Promo"
+            </button>
+            <button class="pill-btn" onclick="setPill('Birthday Packages')">
+              "Birthday Packages"
+            </button>
+          </div>
+        </div>
+
+        <!-- Results area -->
+        <div id="results"></div>
+      </div>
+    </div>
+  </body>
 </html>

@@ -1,5 +1,5 @@
 import os
-
+from models.promo_model import db_connection
 from werkzeug.utils import secure_filename
 from flask import Blueprint, jsonify, request, redirect, render_template, session
 from models.promo_model import (
@@ -291,3 +291,106 @@ def promos_page():
         categories=categories,
         selected_category=selected_category
     )
+
+@promo_routes.route("/promos/search")
+def search_promos():
+
+    try:
+
+        query = request.args.get("q", "").lower().strip()
+        budget = request.args.get("budget")
+        btype = request.args.get("type")  # lte / gte / exact
+
+        conn = db_connection()
+        cursor = conn.cursor()
+
+        # =========================
+        # 1. ALL PROMOS INTENT
+        # =========================
+        if query in ["", "all", "all promos", "show all", "everything", "just promos", "promos"]:
+
+            sql = "SELECT * FROM promos"
+            params = []
+
+            if budget:
+
+                if btype == "gte":
+                    sql += " WHERE price >= %s"
+
+                elif btype == "lte":
+                    sql += " WHERE price <= %s"
+
+                else:
+                    sql += " WHERE price <= %s"
+
+                params.append(budget)
+
+            cursor.execute(sql, params)
+
+            rows = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+            promos = [dict(zip(columns, row)) for row in rows]
+
+            cursor.close()
+            conn.close()
+
+            return jsonify(promos)
+
+        # =========================
+        # 2. NORMAL SEARCH
+        # =========================
+
+        words = query.split()
+
+        conditions = []
+        params = []
+
+        for word in words:
+
+            conditions.append("""
+                COALESCE(LOWER(name), '') LIKE %s
+                OR COALESCE(LOWER(category), '') LIKE %s
+                OR COALESCE(LOWER(description), '') LIKE %s
+            """)
+
+            params.extend([
+                f"%{word}%",
+                f"%{word}%",
+                f"%{word}%"
+            ])
+
+        sql = f"""
+        SELECT *
+        FROM promos
+        WHERE (
+            COALESCE(LOWER(name), '') LIKE %s
+            OR COALESCE(LOWER(category), '') LIKE %s
+            OR COALESCE(LOWER(description), '') LIKE %s
+        )
+        """
+
+        if budget:
+
+            if btype == "gte":
+                sql += " AND price >= %s"
+
+            else:
+                sql += " AND price <= %s"
+
+            params.append(budget)
+
+        cursor.execute(sql, tuple(params))
+
+        rows = cursor.fetchall()
+        columns = [desc[0] for desc in cursor.description]
+        promos = [dict(zip(columns, row)) for row in rows]
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(promos)
+
+    except Exception as e:
+
+        print("SEARCH ERROR:", e)
+        return jsonify({"error": str(e)}), 500

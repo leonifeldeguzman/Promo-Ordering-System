@@ -1,3 +1,4 @@
+
 from database.db_connection import db_connection
 
 
@@ -22,9 +23,13 @@ def get_promos_by_category(category):
     conn = db_connection()
     cursor = conn.cursor()
 
-    query = "SELECT * FROM promos WHERE LOWER(category) = LOWER(%s)"
+    query = """
+    SELECT *
+    FROM promos
+    WHERE LOWER(category) LIKE LOWER(%s)
+    """
 
-    cursor.execute(query, (category,))
+    cursor.execute(query, (f"%{category}%",))
     promos = cursor.fetchall()
 
     cursor.close()
