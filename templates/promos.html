@@ -56,14 +56,18 @@
       <div class="promo-container">
         <!-- CATEGORY TABS -->
         <div class="promo-tabs">
-          <a href="#" class="active">All Promos</a>
-          <a href="#">Breakfast</a>
-          <a href="#">Combo Meals</a>
-          <a href="#">Burgers & Fries</a>
-          <a href="#">Happy Meal</a>
-          <a href="#">Birthday Packages</a>
-          <a href="#">Salad</a>
-        </div>
+        <a href="{{ url_for('promo_routes.promos_page', category='All') }}"
+          class="{{ 'active' if selected_category == 'All' else '' }}">
+          All Promos
+        </a>
+
+        {% for cat in categories %}
+          <a href="{{ url_for('promo_routes.promos_page', category=cat) }}"
+            class="{{ 'active' if selected_category == cat else '' }}">
+            {{ cat }}
+          </a>
+        {% endfor %}
+      </div>
 
         <!-- GRID -->
         <div class="promo-grid">

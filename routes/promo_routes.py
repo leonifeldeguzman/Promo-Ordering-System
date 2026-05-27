@@ -275,7 +275,19 @@ def promos_page():
 
     results = get_all_promos()
 
+    # get selected category from URL
+    selected_category = request.args.get("category", "All")
+
+    # build category list
+    categories = sorted(set([p[2] for p in results if p[2]]))
+
+    # filter promos
+    if selected_category != "All":
+        results = [p for p in results if p[2] == selected_category]
+
     return render_template(
         'promos.html',
-        promos=results
+        promos=results,
+        categories=categories,
+        selected_category=selected_category
     )
