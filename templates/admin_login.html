@@ -12,6 +12,27 @@
   </head>
 
   <body class="admin-body">
+
+     <!-- NAVBAR -->
+    <nav class="navbar">
+        <a href="/" class="navbar-brand">
+            <span class="brand-logo">S'</span>
+
+            <div class="brand-text-group">
+                <span class="brand-name">Speak<em>N</em>Save</span>
+                <span class="brand-sub">Voice Assistant</span>
+            </div>
+        </a>
+
+        <ul class="navbar-nav">
+            <li><a href="/" class="active">Home</a></li>
+            <li><a href="/voice-assistant">Recommendations</a></li>
+            <li><a href="/promos-page">Promos</a></li>
+            <li><a href="/admin-login">Admin Login</a></li>
+        </ul>
+    </nav>
+    <div class="admin-login-wrapper">
+
     <div class="admin-login-card">
       <div class="admin-logo">S'</div>
 
@@ -30,9 +51,14 @@
             required
           />
         </div>
+              {% if error %}
+        <p class="login-error">{{ error }}</p>
+      {% endif %}
 
         <button type="submit" class="admin-login-btn">Login</button>
       </form>
+      </div>
     </div>
+    
   </body>
 </html>

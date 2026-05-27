@@ -227,14 +227,11 @@ def admin_login():
     username = request.form['username']
     password = request.form['password']
 
-    # SIMPLE HARDCODED LOGIN
     if username == "admin" and password == "admin123":
-
         session['admin_logged_in'] = username
-
         return redirect('/admin')
 
-    return "Invalid username or password"
+    return render_template("admin_login.html", error="Invalid username or password")
 
 
 # =========================

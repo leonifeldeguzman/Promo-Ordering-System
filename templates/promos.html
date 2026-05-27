@@ -71,7 +71,7 @@
 
           <div class="promo-card">
             <div class="promo-image">
-              <img src="/{{ promo[7] }}" alt="{{ promo[1] }}" />
+             <img src="{{ url_for('static', filename=promo[7]) }}" alt="{{ promo[1] }}">
 
               <span class="promo-tag"> {{ promo[2] }} </span>
             </div>
