@@ -392,37 +392,73 @@ def search_by_items():
     budget = request.args.get("budget", type=int)
     budget_type = request.args.get("type", "exact")
     
+    print(f"Items search - Query: '{query}', Budget: {budget}, Type: {budget_type}")
+    
     if not query:
         return jsonify([])
     
     conn = db_connection()
     cursor = conn.cursor()
     
+    # Split the query into individual words
     words = query.split()
+    
+    # Build search that focuses on NAME and CATEGORY only (exclude description)
+    # This prevents matching the word "promo" from the description field
     conditions = []
     params = []
     
     for word in words:
-        conditions.append("LOWER(name) LIKE %s")
-        params.append(f"%{word}%")
+        if len(word) > 1:  # Only use words with 2+ characters
+            # Only search in name and category, NOT description
+            conditions.append("(LOWER(name) LIKE %s OR LOWER(category) LIKE %s)")
+            search_pattern = f"%{word}%"
+            params.append(search_pattern)
+            params.append(search_pattern)
     
-    sql = f"""
-        SELECT *
-        FROM promos
-        WHERE {' OR '.join(conditions)}
-    """
+    # If we have conditions
+    if conditions:
+        sql = f"""
+            SELECT *
+            FROM promos
+            WHERE {' OR '.join(conditions)}
+        """
+    else:
+        # Fallback to search only name
+        sql = """
+            SELECT *
+            FROM promos
+            WHERE LOWER(name) LIKE %s
+        """
+        search_pattern = f"%{query}%"
+        params = [search_pattern]
     
     # Add budget filter if provided
-    if budget:
+    if budget is not None:
         if budget_type == "above":
-            sql += f" AND price >= %s"
+            sql += " AND price >= %s"
             params.append(budget)
+            print(f"Adding budget filter: price >= {budget}")
         elif budget_type == "under":
-            sql += f" AND price <= %s"
+            sql += " AND price <= %s"
             params.append(budget)
+            print(f"Adding budget filter: price <= {budget}")
+        else:
+            sql += " AND price <= %s"
+            params.append(budget)
+            print(f"Adding budget filter (default): price <= {budget}")
+    
+    print(f"SQL: {sql}")
+    print(f"Params: {params}")
     
     cursor.execute(sql, tuple(params))
     rows = cursor.fetchall()
+    
+    print(f"Found {len(rows)} items")
+    
+    # Log the actual items found for debugging
+    for row in rows:
+        print(f"  - {row[1]} (₱{row[3]}) - Category: {row[2]}")
     
     columns = [desc[0] for desc in cursor.description]
     promos = [dict(zip(columns, row)) for row in rows]
@@ -431,4 +467,3 @@ def search_by_items():
     conn.close()
     
     return jsonify(promos)
-
