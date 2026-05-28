@@ -186,28 +186,73 @@
       }
 
       function processQuery(transcript) {
-        const text = transcript.toLowerCase().trim();
-
-        const budgetData = extractBudget(text);
-        const budget = budgetData.value;
-        const budgetType = budgetData.type;
-
-        let cleanText = text
-          .replace(/below|under|less than|above|over|more than/g, "")
-          .replace(/\d+/g, "")
-          .replace(/suggest|show me|please|promo(s)?/g, "")
-          .trim();
-
-        let url = "";
-
-        if (budget) {
-          url = `/promos/search?q=${encodeURIComponent(cleanText)}&budget=${budget}&type=${budgetType}`;
-        } else {
-          url = `/promos/search?q=${encodeURIComponent(cleanText)}`;
+    const text = transcript.toLowerCase().trim();
+    console.log("Processing:", text); // Debug
+    
+    // Extract budget
+    const budgetMatch = text.match(/\d+/);
+    const budget = budgetMatch ? parseInt(budgetMatch[0]) : null;
+    
+    // Determine budget type - CHANGE THESE TO MATCH BACKEND EXPECTATIONS
+    let budgetType = null;
+    if (text.includes("below") || text.includes("under") || text.includes("less than")) {
+        budgetType = "under";  // Changed from "lte" to "under"
+    } else if (text.includes("above") || text.includes("over") || text.includes("more than")) {
+        budgetType = "above";  // Changed from "gte" to "above"
+    }
+    
+    // Check for "all promos" intent
+    const isAllPromos = 
+        text === "all" ||
+        text === "all promos" ||
+        text === "show all" ||
+        text === "everything" ||
+        text === "all items" ||
+        text === "menu";
+    
+    console.log("Is all promos:", isAllPromos, "Budget:", budget, "Type:", budgetType);
+    
+    // 1. ALL PROMOS
+    if (isAllPromos) {
+        if (budget && budgetType) {
+            const url = `/promos/search?q=all&budget=${budget}&type=${budgetType}`;
+            console.log("URL:", url);
+            return url;
         }
-
+        const url = `/promos/search?q=all`;
+        console.log("URL:", url);
         return url;
-      }
+    }
+    
+    // 2. Budget-only queries
+    if (budget && budgetType) {
+        const url = `/promos/search?q=all&budget=${budget}&type=${budgetType}`;
+        console.log("URL:", url);
+        return url;
+    }
+    
+    // 3. Food combinations (no budget)
+    const isFoodQuery = text.includes("burger") ||
+        text.includes("chicken") ||
+        text.includes("rice") ||
+        text.includes("fries") ||
+        text.includes("coke") ||
+        text.includes("float") ||
+        text.includes("drink") ||
+        text.includes("meal");
+    
+    if (isFoodQuery) {
+        const cleaned = text.replace(/i want|i need|can i have|please|get me|show me|suggest|promo(s)?/g, "").trim();
+        const url = `/promos/items/search?q=${encodeURIComponent(cleaned)}`;
+        console.log("URL:", url);
+        return url;
+    }
+    
+    // 4. Default fallback
+    const url = `/promos/search?q=${encodeURIComponent(text)}`;
+    console.log("URL:", url);
+    return url;
+}
 
       function extractBudget(text) {
         const number = text.match(/\d+/);

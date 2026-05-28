@@ -1,4 +1,5 @@
 import os
+import re
 from models.promo_model import db_connection
 from werkzeug.utils import secure_filename
 from flask import Blueprint, jsonify, request, redirect, render_template, session
@@ -294,72 +295,56 @@ def promos_page():
 
 @promo_routes.route("/promos/search")
 def search_promos():
-
     try:
-
         query = request.args.get("q", "").lower().strip()
-        budget = request.args.get("budget")
-        btype = request.args.get("type")  # lte / gte / exact
-
+        budget = request.args.get("budget", type=int)
+        budget_type = request.args.get("type", "exact")  # 'above', 'under', or 'exact'
+        
         conn = db_connection()
         cursor = conn.cursor()
-
+        
         # =========================
         # 1. ALL PROMOS INTENT
         # =========================
-        if query in ["", "all", "all promos", "show all", "everything", "just promos", "promos"]:
-
+        if not query or query.strip().lower() in [
+                "all",
+                "all promos",
+                "all items",
+                "show all",
+                "everything",
+                "promos",
+                "items",
+                "menu"
+            ]:
             sql = "SELECT * FROM promos"
             params = []
-
+            
+            # Apply budget filter if provided
             if budget:
-
-                if btype == "gte":
+                if budget_type == "above":
                     sql += " WHERE price >= %s"
-
-                elif btype == "lte":
+                    params.append(budget)
+                elif budget_type == "under":
                     sql += " WHERE price <= %s"
-
+                    params.append(budget)
                 else:
+                    # Exact budget match
                     sql += " WHERE price <= %s"
-
-                params.append(budget)
-
+                    params.append(budget)
+            
             cursor.execute(sql, params)
-
             rows = cursor.fetchall()
             columns = [desc[0] for desc in cursor.description]
             promos = [dict(zip(columns, row)) for row in rows]
-
+            
             cursor.close()
             conn.close()
-
             return jsonify(promos)
-
+        
         # =========================
-        # 2. NORMAL SEARCH
+        # 2. NORMAL SEARCH WITH BUDGET
         # =========================
-
-        words = query.split()
-
-        conditions = []
-        params = []
-
-        for word in words:
-
-            conditions.append("""
-                COALESCE(LOWER(name), '') LIKE %s
-                OR COALESCE(LOWER(category), '') LIKE %s
-                OR COALESCE(LOWER(description), '') LIKE %s
-            """)
-
-            params.extend([
-                f"%{word}%",
-                f"%{word}%",
-                f"%{word}%"
-            ])
-
-        sql = f"""
+        sql = """
         SELECT *
         FROM promos
         WHERE (
@@ -368,29 +353,82 @@ def search_promos():
             OR COALESCE(LOWER(description), '') LIKE %s
         )
         """
-
+        
+        params = [
+            f"%{query}%",
+            f"%{query}%",
+            f"%{query}%"
+        ]
+        
+        # Apply budget filter
         if budget:
-
-            if btype == "gte":
+            if budget_type == "above":
                 sql += " AND price >= %s"
-
-            else:
+                params.append(budget)
+            elif budget_type == "under":
                 sql += " AND price <= %s"
-
-            params.append(budget)
-
+                params.append(budget)
+            else:
+                # Exact or default behavior
+                sql += " AND price <= %s"
+                params.append(budget)
+        
         cursor.execute(sql, tuple(params))
-
         rows = cursor.fetchall()
         columns = [desc[0] for desc in cursor.description]
         promos = [dict(zip(columns, row)) for row in rows]
-
+        
         cursor.close()
         conn.close()
-
         return jsonify(promos)
-
+        
     except Exception as e:
-
         print("SEARCH ERROR:", e)
         return jsonify({"error": str(e)}), 500
+    
+@promo_routes.route("/promos/items/search")
+def search_by_items():
+    query = request.args.get("q", "").lower().strip()
+    budget = request.args.get("budget", type=int)
+    budget_type = request.args.get("type", "exact")
+    
+    if not query:
+        return jsonify([])
+    
+    conn = db_connection()
+    cursor = conn.cursor()
+    
+    words = query.split()
+    conditions = []
+    params = []
+    
+    for word in words:
+        conditions.append("LOWER(name) LIKE %s")
+        params.append(f"%{word}%")
+    
+    sql = f"""
+        SELECT *
+        FROM promos
+        WHERE {' OR '.join(conditions)}
+    """
+    
+    # Add budget filter if provided
+    if budget:
+        if budget_type == "above":
+            sql += f" AND price >= %s"
+            params.append(budget)
+        elif budget_type == "under":
+            sql += f" AND price <= %s"
+            params.append(budget)
+    
+    cursor.execute(sql, tuple(params))
+    rows = cursor.fetchall()
+    
+    columns = [desc[0] for desc in cursor.description]
+    promos = [dict(zip(columns, row)) for row in rows]
+    
+    cursor.close()
+    conn.close()
+    
+    return jsonify(promos)
+
