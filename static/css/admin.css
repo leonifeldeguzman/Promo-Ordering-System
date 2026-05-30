@@ -354,7 +354,7 @@ aside {
     /* 3. FORM STYLING */
     .form-grid-3 {
       display: grid;
-      grid-template-columns: 5fr 3fr 4fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 20px;
       margin-bottom: 24px;
     }

@@ -120,7 +120,7 @@
               </div>
             </div>
 
-            <div class="form-grid-2">
+            <div class="form-grid-3">
               <div class="form-group">
                 <label>Category</label>
                 <div class="select-container">
@@ -132,6 +132,12 @@
                   <i class="fa-solid fa-chevron-down chevron"></i>
                 </div>
               </div>
+               <div class="form-group">
+              <label>Serving Size (Pax)</label>
+              <input type="number" id="serving_size" name="serving_size" placeholder="e.g. 1, 2, 3" />
+            </div>
+
+
               <div class="form-group">
                 <label>Promo Details</label>
                 <input
@@ -205,6 +211,7 @@
                 <tr>
                   <th style="width: 35%">Menu Item</th>
                   <th>Category</th>
+                  <th>Serving Size</th>
                   <th>Price</th>
                   <th>Status</th>
                   <th>Promo</th>
@@ -216,6 +223,7 @@
                 <tr>
                   <td id="name{{ item[0] }}">{{ item[1] }}</td>
                   <td id="category{{ item[0] }}">{{ item[2] }}</td>
+                  <td id="serving_size{{ item[0] }}">{{ item[8] or '-' }}</td>
                   <td id="price{{ item[0] }}">₱{{ item[3] }}</td>
                   <td id="status{{ item[0] }}">
                     {% set status = item[6] %} {% if status == "Active" %}
@@ -415,7 +423,7 @@
           const category = text.match(/category\s+(.+?)(?=promo|status|$)/);
           const promo = text.match(/promo\s+(.+?)(?=status|$)/);
           const status = text.match(/status\s+(active|sold out|phased out)/);
-
+          const servingSize = text.match(/serving size\s+(\d+)/i) || text.match(/serves\s+(\d+)/i) || text.match(/for\s+(\d+)\s+pax/i);
           let item = "";
 
           // =========================
@@ -428,6 +436,7 @@
               .replace(/category.+/i, "")
               .replace(/promo.+/i, "")
               .replace(/status.+/i, "")
+              .replace(/serving size.+/i, "")
               .replace(/\s+/g, " ")
               .trim();
 
@@ -450,6 +459,15 @@
             document.getElementById("price").value = price[1];
             speak(`Price set to ${price[1]}`);
           }
+          // =========================
+          // SERVING SIZE - ADD THIS BLOCK
+          // =========================
+          if (servingSize) {
+            document.getElementById("serving_size").value = servingSize[1];
+            speak(`Serving size set to ${servingSize[1]} pax`);
+          }
+
+          
 
           // =========================
           // PROMO
@@ -644,6 +662,7 @@
 
         const nameCell = document.getElementById(`name${id}`);
         const categoryCell = document.getElementById(`category${id}`);
+        const servingSizeCell = document.getElementById(`serving_size${id}`);
         const priceCell = document.getElementById(`price${id}`);
         const statusCell = document.getElementById(`status${id}`);
         const promoCell = document.getElementById(`promo${id}`);
@@ -715,6 +734,7 @@
           nameCell.contentEditable = "false";
           priceCell.contentEditable = "false";
           promoCell.contentEditable = "false";
+          servingSizeCell.contentEditable = "false";
 
           row.classList.remove("editing");
 
@@ -753,6 +773,7 @@
       function saveRow(id) {
         const statusCell = document.getElementById(`status${id}`);
         const categoryCell = document.getElementById(`category${id}`);
+        const servingSizeCell = document.getElementById(`serving_size${id}`);
 
         // =========================
         // CATEGORY (supports both text + dropdown)
@@ -772,6 +793,7 @@
         const data = {
           name: document.getElementById(`name${id}`).innerText.trim(),
           category,
+           serving_size: document.getElementById(`serving_size${id}`).innerText.trim(),
           price: document
             .getElementById(`price${id}`)
             .innerText.replace("₱", "")

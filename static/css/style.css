@@ -709,18 +709,22 @@ body {
   border-radius: 24px;
   overflow: hidden;
   border: 2px solid #e8e8e8;
-  transition: 0.35s ease;
-  opacity: 0.55;
-  transform: scale(0.9);
+
   flex-shrink: 0;
+
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+
+  /* REMOVE FADE EFFECT */
+  opacity: 1;
+  transform: scale(1);
+
+  transition: all 0.3s ease;
 }
 
-.carousel-card.active {
-  transform: scale(1.05);
-  opacity: 1;
-  border: 2px solid #444;
-  z-index: 2;
+.carousel-card:hover {
+  transform: translateY(-10px) scale(1.05);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+  border-color: var(--yellow);
 }
 
 .promo-image {

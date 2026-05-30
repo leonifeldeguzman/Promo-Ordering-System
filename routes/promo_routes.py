@@ -120,6 +120,7 @@ def add_item():
     price = request.form['price']
     promo_details = request.form.get('promo_details')
     status = request.form['status']
+    serving_size = request.form.get('serving_size')
 
     # IMAGE
     image = request.files['image']
@@ -147,7 +148,8 @@ def add_item():
         category,
         promo_details,
         status,
-        image_url
+        image_url,
+        serving_size
     )
 
     return redirect('/admin')
@@ -197,6 +199,7 @@ def update_item(item_id):
     price = data.get("price")
     status = data.get("status")
     promo = data.get("promo")
+    serving_size = data.get("serving_size")
 
     update_item_details(
         item_id,
@@ -204,7 +207,8 @@ def update_item(item_id):
         category,
         price,
         promo,
-        status
+        status,
+        serving_size
     )
 
     return jsonify({"success": True})
@@ -467,3 +471,4 @@ def search_by_items():
     conn.close()
     
     return jsonify(promos)
+

@@ -44,7 +44,7 @@ def get_all_promos():
     cursor = conn.cursor()
 
     query = """
-        SELECT id, name, category, price, description, promo_details, status, image_url
+        SELECT id, name, category, price, description, promo_details, status, image_url, serving_size
         FROM promos
     """
 
@@ -77,15 +77,15 @@ def get_promos_by_category_and_budget(category, budget):
     return promos
 
 
-def add_menu_item(name, price, category, promo_details, status, image_url):
+def add_menu_item(name, price, category, promo_details, status, image_url,serving_size):
 
     conn = db_connection()
     cursor = conn.cursor()
 
     query = """
         INSERT INTO promos
-        (name, price, category, description, promo_details, status, image_url)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        (name, price, category, description, promo_details, status, image_url, serving_size)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """
 
     description = f"Delicious {name} promo! Save big on this tasty offer."
@@ -97,7 +97,8 @@ def add_menu_item(name, price, category, promo_details, status, image_url):
         description,
         promo_details,
         status,
-        image_url
+        image_url,
+        serving_size
     ))
 
     conn.commit()
@@ -166,7 +167,8 @@ def update_item_details(
     category,
     price,
     promo_details,
-    status
+    status,
+    serving_size
 ):
 
     conn = db_connection()
@@ -179,7 +181,8 @@ def update_item_details(
             category = %s,
             price = %s,
             promo_details = %s,
-            status = %s
+            status = %s,
+            serving_size = %s
         WHERE id = %s
     """
 
@@ -189,6 +192,7 @@ def update_item_details(
         price,
         promo_details,
         status,
+        serving_size,
         item_id
     ))
 

@@ -628,6 +628,10 @@
                 <option value="Combo Meals">Combo Meals</option>
               </select>
             </div>
+              <div class="form-group">
+              <label>Serving Size (Pax)</label>
+              <input type="number" id="serving_size" placeholder="e.g. 3">
+            </div>
             <div class="form-group">
               <label>Promo Availability</label>
               <input type="text" id="promo_details" placeholder="Discount Combo">
@@ -689,6 +693,7 @@
               <tr>
                 <th style="width: 30%;">Menu Item</th>
                 <th style="width: 15%;">Category</th>
+                <th style="width: 15%;">Serving Size</th>
                 <th style="width: 15%;">Price</th>
                 <th style="width: 15%;">Status</th>
                 <th style="width: 13%;">Promo</th>
@@ -696,6 +701,7 @@
               </tr>
             </thead>
             <tbody>
+              
               </tbody>
           </table>
         </div>
@@ -718,10 +724,25 @@
   <script>
     // Mock local global dynamic inventory repository item objects state initialization
     let inventoryState = [
-      { id: 1, name: "Cheeseburger Deal", category: "Burgers", price: "125", status: "Active", promo: "LTO" },
-      { id: 2, name: "Cheeseburger Deal", category: "Burgers", price: "125", status: "Active", promo: "LTO" },
-      { id: 3, name: "Cheeseburger Deal", category: "Burgers", price: "125", status: "Active", promo: "LTO" }
-    ];
+  {
+    id: 1,
+    name: "Cheeseburger Deal",
+    category: "Burgers",
+    serving_size: 2,
+    price: "125",
+    status: "Active",
+    promo: "LTO"
+  },
+  {
+    id: 2,
+    name: "Chicken Burger",
+    category: "Burgers",
+    serving_size: 1,
+    price: "99",
+    status: "Active",
+    promo: "Promo"
+  }
+];
     
     let deleteIdTarget = null;
 
@@ -764,27 +785,53 @@
           // ==========================================================
           // INLINE EDIT MODE (Matches wireframe layout logic layout specs)
           // ==========================================================
-          tr.innerHTML = `
-            <td class="item-name">${item.name}</td>
-            <td>${item.category}</td>
-            <td>
-              <input type="text" class="inline-edit-input" id="edit-price-${item.id}" value="${item.price}" style="width: 80px;">
-            </td>
-            <td>
-              <select class="inline-edit-select" id="edit-status-${item.id}" style="width: 110px;">
-                <option value="Active" ${item.status === 'Active' ? 'selected' : ''}>Active</option>
-                <option value="Sold Out" ${item.status === 'Sold Out' ? 'selected' : ''}>Sold Out</option>
-                <option value="Phased Out" ${item.status === 'Phased Out' ? 'selected' : ''}>Phased Out</option>
-              </select>
-            </td>
-            <td>${item.promo}</td>
-            <td>
-              <div style="display: flex; align-items: center;">
-                <button type="button" class="btn-inline-save" onclick="saveInlineRow(${item.id})">Save</button>
-                <button type="button" class="btn-inline-cancel" onclick="cancelInlineRow(${item.id})">×</button>
-              </div>
-            </td>
-          `;
+         tr.innerHTML = `
+        <td class="item-name">${item.name}</td>
+        <td>${item.category}</td>
+
+        <td>
+          <input type="number" class="inline-edit-input" id="edit-serving-${item.id}" value="${item.serving_size || ''}" style="width:80px;">
+        </td>
+
+        <td>
+          <input
+            type="text"
+            class="inline-edit-input"
+            id="edit-price-${item.id}"
+            value="${item.price}"
+            style="width:80px;">
+        </td>
+
+        <td>
+          <select
+            class="inline-edit-select"
+            id="edit-status-${item.id}">
+            <option value="Active" ${item.status === 'Active' ? 'selected' : ''}>Active</option>
+            <option value="Sold Out" ${item.status === 'Sold Out' ? 'selected' : ''}>Sold Out</option>
+            <option value="Phased Out" ${item.status === 'Phased Out' ? 'selected' : ''}>Phased Out</option>
+          </select>
+        </td>
+
+        <td>${item.promo}</td>
+
+        <td>
+          <button
+            type="button"
+            class="btn-inline-save"
+            onclick="saveInlineRow(${item.id})">
+            Save
+          </button>
+
+          <button
+            type="button"
+            class="btn-inline-cancel"
+            onclick="cancelInlineRow(${item.id})">
+            ×
+          </button>
+        </td>
+      `;
+
+          
         } else {
           // ==========================================================
           // DEFAULT ROW VIEW RENDERING MATRIX DISPLAY MODE
@@ -792,6 +839,7 @@
           tr.innerHTML = `
             <td class="item-name">${item.name}</td>
             <td>${item.category}</td>
+             <td>${item.serving_size || '-'}</td>
             <td>P${item.price}</td>
             <td><span class="status-pill">${item.status}</span></td>
             <td>${item.promo}</td>
@@ -816,50 +864,52 @@
       renderInventoryTable();
     }
 
-    function saveInlineRow(id) {
-      const updatedPrice = document.getElementById(`edit-price-${id}`).value.trim();
-      const updatedStatus = document.getElementById(`edit-status-${id}`).value;
-
-      inventoryState = inventoryState.map(item => {
-        if (item.id === id) {
-          return { ...item, price: updatedPrice, status: updatedStatus, isEditing: false };
-        }
-        return item;
-      });
-
-      speak("Record item changes updated successfully");
-      renderInventoryTable();
+   function saveInlineRow(id) {
+  const updatedPrice = document.getElementById(`edit-price-${id}`).value.trim();
+  const updatedStatus = document.getElementById(`edit-status-${id}`).value;
+  const updatedServing = document.getElementById(`edit-serving-${id}`).value;
+  inventoryState = inventoryState.map(item => {
+    if (item.id === id) {
+      return { ...item, price: updatedPrice, status: updatedStatus, serving_size: updatedServing, isEditing: false };
     }
+    return item;
+  });
+
+  speak("Record item changes updated successfully");
+  renderInventoryTable();
+}
 
     // Create item records append tracking handling mechanisms
-    function saveNewItem(e) {
-      e.preventDefault();
-      const name = document.getElementById("item_name").value.trim() || "Unnamed Menu Item";
-      const price = document.getElementById("price").value.trim() || "0";
-      const status = document.getElementById("status").value;
-      const category = document.getElementById("category").value;
-      const promo = document.getElementById("promo_details").value.trim() || "None";
+   function saveNewItem(e) {
+  e.preventDefault();
+  const name = document.getElementById("item_name").value.trim() || "Unnamed Menu Item";
+  const price = document.getElementById("price").value.trim() || "0";
+  const status = document.getElementById("status").value;
+  const category = document.getElementById("category").value;
+  const promo = document.getElementById("promo_details").value.trim() || "None";
+  const serving_size = document.getElementById("serving_size").value;
 
-      const newItem = {
-        id: Date.now(),
-        name: name,
-        category: category,
-        price: price,
-        status: status,
-        promo: promo
-      };
+  const newItem = {
+    id: Date.now(),
+    name: name,
+    category: category,
+    price: price,
+    status: status,
+    promo: promo,
+    serving_size: serving_size || "0"  // Add fallback value
+  };
 
-      inventoryState.push(newItem);
-      document.getElementById("adminForm").reset();
-      document.getElementById("imagePreview").innerHTML = "";
-      
-      // Clear Recommendation Chips active modifiers styles
-      document.querySelectorAll('.tag-chip').forEach(chip => chip.classList.remove('selected'));
-      
-      renderInventoryTable();
-      speak("Item appended to store database configuration matrix");
-      switchTab('list');
-    }
+  inventoryState.push(newItem);
+  document.getElementById("adminForm").reset();
+  document.getElementById("imagePreview").innerHTML = "";
+  
+  // Clear Recommendation Chips active modifiers styles
+  document.querySelectorAll('.tag-chip').forEach(chip => chip.classList.remove('selected'));
+  
+  renderInventoryTable();
+  speak("Item appended to store database configuration matrix");
+  switchTab('list');
+}
 
     // Modal popup confirmation delete dialog controllers
     function triggerDelete(id) {

@@ -188,6 +188,26 @@
       function processQuery(transcript) {
     const text = transcript.toLowerCase().trim();
     console.log("Processing:", text);
+
+    // Extract pax / people count
+let pax = null;
+
+const paxPatterns = [
+    /(\d+)\s*(pax|people|persons|person)/i,
+    /feed\s*(\d+)/i,
+    /for\s*(\d+)/i,
+    /good for\s*(\d+)/i
+];
+
+for (const pattern of paxPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+        pax = parseInt(match[1]);
+        break;
+    }
+}
+
+console.log("Pax:", pax);
     
     // Extract budget
     const budgetMatch = text.match(/\d+/);
@@ -219,7 +239,12 @@
             console.log("URL (all promos with budget):", url);
             return url;
         }
-        const url = `/promos/search?q=all`;
+        let url = `/promos/search?q=all`;
+
+        if (pax) {
+            url += `&pax=${pax}`;
+        }
+
         console.log("URL (all promos):", url);
         return url;
     }
@@ -229,8 +254,14 @@
     const isGenericQuery = genericTerms.some(term => text.includes(term));
     
     // 2. If it's a generic term like "meals under 150", treat as budget-only query
-    if (isGenericQuery && budget && budgetType) {
-        const url = `/promos/search?q=all&budget=${budget}&type=${budgetType}`;
+      if (isGenericQuery && budget && budgetType) {
+
+        let url = `/promos/search?q=all&budget=${budget}&type=${budgetType}`;
+
+        if (pax) {
+            url += `&pax=${pax}`;
+        }
+
         console.log("URL (generic term with budget):", url);
         return url;
     }
@@ -259,29 +290,44 @@
     
     // 4. If we have a specific food/item name AND budget, do item search with budget
     if (possibleFoodItem.length > 0 && budget && budgetType) {
-        const url = `/promos/items/search?q=${encodeURIComponent(possibleFoodItem)}&budget=${budget}&type=${budgetType}`;
-        console.log("URL (specific food with budget):", url);
-        return url;
+    let url = `/promos/items/search?q=${encodeURIComponent(possibleFoodItem)}&budget=${budget}&type=${budgetType}`;
+
+    if (pax) {
+        url += `&pax=${pax}`;
     }
+
+    console.log("URL (specific food with budget):", url);
+    return url;
+}
     
     // 5. If we have a specific food/item name but no budget
-    if (possibleFoodItem.length > 0) {
-        const url = `/promos/items/search?q=${encodeURIComponent(possibleFoodItem)}`;
-        console.log("URL (specific food only):", url);
-        return url;
+   if (possibleFoodItem.length > 0) {
+    let url = `/promos/items/search?q=${encodeURIComponent(possibleFoodItem)}`;
+
+    if (pax) {
+        url += `&pax=${pax}`;
     }
+
+    console.log("URL (specific food only):", url);
+    return url;
+}
     
     // 6. Budget-only queries (no specific food)
-    if (budget && budgetType) {
-        const url = `/promos/search?q=all&budget=${budget}&type=${budgetType}`;
-        console.log("URL (budget only):", url);
-        return url;
+if (budget && budgetType) {
+    let url = `/promos/search?q=all&budget=${budget}&type=${budgetType}`;
+
+    if (pax) {
+        url += `&pax=${pax}`;
     }
-    
-    // 7. Default fallback
-    const url = `/promos/search?q=${encodeURIComponent(text)}`;
-    console.log("URL (fallback):", url);
+
+    console.log("URL (budget only):", url);
     return url;
+}
+
+// 7. Default fallback
+const url = `/promos/search?q=${encodeURIComponent(text)}`;
+console.log("URL (fallback):", url);
+return url;
 }
 
       function extractBudget(text) {
