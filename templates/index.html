@@ -93,14 +93,14 @@
                             </p>
 
                             <div class="price-row">
-                                <span class="old-price">
-                                    ₱${promo.old_price || promo.price + 40}
-                                </span>
+                            <span class="old-price">
+                                ₱${Math.round(Number(promo.price) + 40)}
+                            </span>
 
-                                <span class="new-price">
-                                    ₱${promo.price}
-                                </span>
-                            </div>
+                            <span class="new-price">
+                                ₱${Math.round(Number(promo.price))}
+                            </span>
+                        </div>
                         </div>
 
                     </div>
