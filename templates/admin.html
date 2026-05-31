@@ -59,7 +59,10 @@
     </aside>
 
     <main>
-      <header>
+      <header class="header">
+      <button id="sidebarToggle" class="sidebar-toggle-btn">
+        <i class="fa fa-bars"></i>
+      </button>
         <h2>Menu Inventory</h2>
         <div class="header-actions">
           <div class="user-avatar">
@@ -127,7 +130,11 @@
                   <select id="category" name="category">
                     <option value="burgers">Burgers</option>
                     <option value="drinks">Drinks</option>
-                    <option value="sides">Desserts</option>
+                    <option value="desserts">Desserts</option>
+                    <option value="ricemeals">Rice Meals</option>
+                    <option value="chicken">Chicken</option>
+                    <option value="sharing">Good for Sharing</option>
+
                   </select>
                   <i class="fa-solid fa-chevron-down chevron"></i>
                 </div>
@@ -832,6 +839,24 @@
             categoryCell.innerText = category;
           });
       }
+      document.addEventListener("DOMContentLoaded", function () {
+    const toggleBtn = document.getElementById("sidebarToggle");
+    const sidebar = document.querySelector(".sidebar"); // 💡 Target explicitly by your desktop class name
+
+    if (toggleBtn && sidebar) {
+      toggleBtn.addEventListener("click", function (e) {
+        sidebar.classList.toggle("active");
+        e.stopPropagation(); 
+      });
+
+      // Close the mobile drawer menu seamlessly if user taps outside of it
+      document.addEventListener("click", function (e) {
+        if (!sidebar.contains(e.target) && e.target !== toggleBtn) {
+          sidebar.classList.remove("active");
+        }
+      });
+    }
+  });
     </script>
   </body>
 </html>
