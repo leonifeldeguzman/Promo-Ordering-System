@@ -302,81 +302,40 @@ def search_promos():
     try:
         query = request.args.get("q", "").lower().strip()
         budget = request.args.get("budget", type=int)
-        budget_type = request.args.get("type", "exact")  # 'above', 'under', or 'exact'
+        budget_type = request.args.get("type", "exact")
+        pax = request.args.get("pax", type=int)
         
         conn = db_connection()
         cursor = conn.cursor()
         
-        # =========================
-        # 1. ALL PROMOS INTENT
-        # =========================
-        if not query or query.strip().lower() in [
-                "all",
-                "all promos",
-                "all items",
-                "show all",
-                "everything",
-                "promos",
-                "items",
-                "menu"
-            ]:
-            sql = "SELECT * FROM promos"
-            params = []
-            
-            # Apply budget filter if provided
-            if budget:
-                if budget_type == "above":
-                    sql += " WHERE price >= %s"
-                    params.append(budget)
-                elif budget_type == "under":
-                    sql += " WHERE price <= %s"
-                    params.append(budget)
-                else:
-                    # Exact budget match
-                    sql += " WHERE price <= %s"
-                    params.append(budget)
-            
-            cursor.execute(sql, params)
-            rows = cursor.fetchall()
-            columns = [desc[0] for desc in cursor.description]
-            promos = [dict(zip(columns, row)) for row in rows]
-            
-            cursor.close()
-            conn.close()
-            return jsonify(promos)
+        params = []
         
-        # =========================
-        # 2. NORMAL SEARCH WITH BUDGET
-        # =========================
-        sql = """
-        SELECT *
-        FROM promos
-        WHERE (
-            COALESCE(LOWER(name), '') LIKE %s
-            OR COALESCE(LOWER(category), '') LIKE %s
-            OR COALESCE(LOWER(description), '') LIKE %s
-        )
-        """
-        
-        params = [
-            f"%{query}%",
-            f"%{query}%",
-            f"%{query}%"
-        ]
-        
-        # Apply budget filter
+        if not query or query in ["all", "all promos", "all items", "show all", "everything", "promos", "items", "menu", "good"]:
+            sql = "SELECT * FROM promos WHERE 1=1"
+        else:
+            sql = """
+            SELECT * FROM promos 
+            WHERE (
+                COALESCE(LOWER(name), '') LIKE %s
+                OR COALESCE(LOWER(category), '') LIKE %s
+                OR COALESCE(LOWER(description), '') LIKE %s
+            )
+            """
+            params.extend([f"%{query}%", f"%{query}%", f"%{query}%"])
+            
+        # Apply budget filter if provided
         if budget:
             if budget_type == "above":
                 sql += " AND price >= %s"
-                params.append(budget)
-            elif budget_type == "under":
-                sql += " AND price <= %s"
-                params.append(budget)
             else:
-                # Exact or default behavior
                 sql += " AND price <= %s"
-                params.append(budget)
-        
+            params.append(budget)
+            
+        # Apply Pax / Serving Size Filter cleanly as integer match
+        if pax:
+            sql += " AND serving_size = %s"
+            params.append(pax)
+            
         cursor.execute(sql, tuple(params))
         rows = cursor.fetchall()
         columns = [desc[0] for desc in cursor.description]
@@ -389,80 +348,60 @@ def search_promos():
     except Exception as e:
         print("SEARCH ERROR:", e)
         return jsonify({"error": str(e)}), 500
-    
+
+
 @promo_routes.route("/promos/items/search")
 def search_by_items():
     query = request.args.get("q", "").lower().strip()
     budget = request.args.get("budget", type=int)
     budget_type = request.args.get("type", "exact")
+    pax = request.args.get("pax", type=int)
     
-    print(f"Items search - Query: '{query}', Budget: {budget}, Type: {budget_type}")
-    
-    if not query:
-        return jsonify([])
+    print(f"Items search - Query: '{query}', Budget: {budget}, Type: {budget_type}, Pax: {pax}")
     
     conn = db_connection()
     cursor = conn.cursor()
     
-    # Split the query into individual words
-    words = query.split()
-    
-    # Build search that focuses on NAME and CATEGORY only (exclude description)
-    # This prevents matching the word "promo" from the description field
-    conditions = []
     params = []
     
-    for word in words:
-        if len(word) > 1:  # Only use words with 2+ characters
-            # Only search in name and category, NOT description
-            conditions.append("(LOWER(name) LIKE %s OR LOWER(category) LIKE %s)")
-            search_pattern = f"%{word}%"
-            params.append(search_pattern)
-            params.append(search_pattern)
-    
-    # If we have conditions
-    if conditions:
-        sql = f"""
-            SELECT *
-            FROM promos
-            WHERE {' OR '.join(conditions)}
-        """
+    # If query is completely empty or contains leftover fluff adjectives, treat it as a broad item query
+    if not query or query in ["good", "for", "people", "all", "meals", "meal"]:
+        sql = "SELECT * FROM promos WHERE 1=1"
     else:
-        # Fallback to search only name
-        sql = """
-            SELECT *
-            FROM promos
-            WHERE LOWER(name) LIKE %s
-        """
-        search_pattern = f"%{query}%"
-        params = [search_pattern]
+        words = query.split()
+        conditions = []
+        
+        for word in words:
+            if len(word) > 1:
+                conditions.append("(LOWER(name) LIKE %s OR LOWER(category) LIKE %s)")
+                search_pattern = f"%{word}%"
+                params.extend([search_pattern, search_pattern])
+        
+        if conditions:
+            # 💡 CHANGED FROM 'OR' JOIN INSIDE AN 'AND' TO ALLOW FLEXIBLE MATCHES
+            sql = f"SELECT * FROM promos WHERE ({' OR '.join(conditions)})"
+        else:
+            sql = "SELECT * FROM promos WHERE LOWER(name) LIKE %s"
+            params.append(f"%{query}%")
     
     # Add budget filter if provided
     if budget is not None:
         if budget_type == "above":
             sql += " AND price >= %s"
-            params.append(budget)
-            print(f"Adding budget filter: price >= {budget}")
-        elif budget_type == "under":
-            sql += " AND price <= %s"
-            params.append(budget)
-            print(f"Adding budget filter: price <= {budget}")
         else:
             sql += " AND price <= %s"
-            params.append(budget)
-            print(f"Adding budget filter (default): price <= {budget}")
+        params.append(budget)
+    
+    # Add Pax / Serving Size Filter
+    if pax:
+        sql += " AND serving_size = %s"
+        params.append(pax)
     
     print(f"SQL: {sql}")
     print(f"Params: {params}")
     
     cursor.execute(sql, tuple(params))
     rows = cursor.fetchall()
-    
-    print(f"Found {len(rows)} items")
-    
-    # Log the actual items found for debugging
-    for row in rows:
-        print(f"  - {row[1]} (₱{row[3]}) - Category: {row[2]}")
     
     columns = [desc[0] for desc in cursor.description]
     promos = [dict(zip(columns, row)) for row in rows]
@@ -471,4 +410,3 @@ def search_by_items():
     conn.close()
     
     return jsonify(promos)
-

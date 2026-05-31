@@ -184,151 +184,118 @@
           });
         });
       }
-
-      function processQuery(transcript) {
-    const text = transcript.toLowerCase().trim();
+function processQuery(transcript) {
+    let text = transcript.toLowerCase().trim();
     console.log("Processing:", text);
 
-    // Extract pax / people count
-let pax = null;
+    // ==========================================
+    // INNER UTILITY: Dynamic Text-to-Number Parser
+    // ==========================================
+    const textToNumber = (inputStr) => {
+        const words = {
+            'zero':0, 'one':1, 'two':2, 'three':3, 'four':4, 'five':5, 'six':6, 'seven':7, 'eight':8, 'nine':9, 'ten':10,
+            'eleven':11, 'twelve':12, 'thirteen':13, 'fourteen':14, 'fifteen':15, 'sixteen':16, 'seventeen':17, 'eighteen':18, 'nineteen':19,
+            'twenty':20, 'thirty':30, 'forty':40, 'fifty':50, 'sixty':60, 'seventy':70, 'eighty':80, 'ninety':90
+        };
+        const scales = { 'hundred':100, 'thousand':1000, 'million':1000000, 'billion':1000000000 };
 
-const paxPatterns = [
-    /(\d+)\s*(pax|people|persons|person)/i,
-    /feed\s*(\d+)/i,
-    /for\s*(\d+)/i,
-    /good for\s*(\d+)/i
-];
+        const tokens = inputStr.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/);
+        let currentResult = 0;
+        let finalResult = 0;
+        let hasNumber = false;
 
-for (const pattern of paxPatterns) {
-    const match = text.match(pattern);
-    if (match) {
-        pax = parseInt(match[1]);
-        break;
-    }
-}
+        for (let word of tokens) {
+            if (words[word] !== undefined) {
+                currentResult += words[word];
+                hasNumber = true;
+            } else if (scales[word] !== undefined) {
+                currentResult *= scales[word];
+                if (word !== 'hundred') {
+                    finalResult += currentResult;
+                    currentResult = 0;
+                }
+                hasNumber = true;
+            } else if (!isNaN(word) && word !== "") {
+                currentResult += parseInt(word);
+                hasNumber = true;
+            }
+        }
+        finalResult += currentResult;
+        return hasNumber ? finalResult : null;
+    };
 
-console.log("Pax:", pax);
+    // ==========================================
+    // DYNAMIC PARSING LOGIC
+    // ==========================================
+
+    // 1 & 2. Extract pax count using phrase-context rules
+    let pax = null;
+    const paxMatch = text.match(/(?:for|feed|good for|pax|people|persons?)\s+([a-z0-9\s]+?)(?:$|\s+(?:under|below|above|over|pesos|php|p\d))/i);
     
-    // Extract budget
-    const budgetMatch = text.match(/\d+/);
-    const budget = budgetMatch ? parseInt(budgetMatch[0]) : null;
+    if (paxMatch) {
+        const parsedPax = textToNumber(paxMatch[1]);
+        if (parsedPax !== null) {
+            pax = parsedPax;
+            text = text.replace(paxMatch[0], ""); // Strip out the text so it won't break budget reading
+        }
+    }
+
+    console.log("Pax:", pax);
+    
+    // 3. Extract budget from remaining text dynamically
+    let budget = null;
+    const budgetMatch = text.match(/(?:under|below|less than|above|over|more than|budget of)?\s*([a-z0-9\s]+?)(?:\s*(?:pesos|php|p)\b|$)/i);
+    if (budgetMatch) {
+        const parsedBudget = textToNumber(budgetMatch[1]);
+        if (parsedBudget !== null) budget = parsedBudget;
+    }
     
     // Determine budget type
     let budgetType = null;
-    if (text.includes("under") || text.includes("below") || text.includes("less than")) {
+    if (transcript.includes("under") || transcript.includes("below") || transcript.includes("less than")) {
         budgetType = "under";
-    } else if (text.includes("above") || text.includes("over") || text.includes("more than")) {
+    } else if (transcript.includes("above") || transcript.includes("over") || transcript.includes("more than")) {
         budgetType = "above";
     }
     
     // Check for "all promos" intent
     const isAllPromos = 
-        text === "all" ||
-        text === "all promos" ||
-        text === "show all" ||
-        text === "everything" ||
-        text === "all items" ||
-        text === "menu";
+        transcript.includes("all") ||
+        transcript.includes("everything") ||
+        transcript.includes("menu");
     
-    console.log("Is all promos:", isAllPromos);
-    
-    // 1. ALL PROMOS
-    if (isAllPromos) {
-        if (budget && budgetType) {
-            const url = `/promos/search?q=all&budget=${budget}&type=${budgetType}`;
-            console.log("URL (all promos with budget):", url);
-            return url;
-        }
-        let url = `/promos/search?q=all`;
-
-        if (pax) {
-            url += `&pax=${pax}`;
-        }
-
-        console.log("URL (all promos):", url);
-        return url;
-    }
-    
-    // List of generic terms that should trigger "all promos" with budget
-    const genericTerms = ["meals", "food", "items", "promos", "deals", "offers"];
-    const isGenericQuery = genericTerms.some(term => text.includes(term));
-    
-    // 2. If it's a generic term like "meals under 150", treat as budget-only query
-      if (isGenericQuery && budget && budgetType) {
-
-        let url = `/promos/search?q=all&budget=${budget}&type=${budgetType}`;
-
-        if (pax) {
-            url += `&pax=${pax}`;
-        }
-
-        console.log("URL (generic term with budget):", url);
-        return url;
-    }
-    
-    // 3. Extract specific food/item name by removing budget and generic words
+    // Clean up specific food item keywords
     let possibleFoodItem = text;
-    
-    // Remove the budget number
-    if (budget) {
-        possibleFoodItem = possibleFoodItem.replace(budget.toString(), "");
-    }
-    
-    // Remove budget indicator words
     possibleFoodItem = possibleFoodItem.replace(/under|below|less than|above|over|more than|pesos|p|php/gi, "");
-    
-    // Remove generic terms
-    possibleFoodItem = possibleFoodItem.replace(/meals|food|items|promos|deals|offers/gi, "");
-    
-    // Remove filler words
-    possibleFoodItem = possibleFoodItem.replace(/i want|i need|can i have|please|get me|show me|suggest|promo/gi, "");
-    
-    // Clean up extra spaces
+    if (budget) possibleFoodItem = possibleFoodItem.replace(budget.toString(), "");
+    possibleFoodItem = possibleFoodItem.replace(/meals|food|items|promos|deals|offers|good|for|people|pax|person|meal|item/gi, "");
+    possibleFoodItem = possibleFoodItem.replace(/i\s+want|i\s+need|can\s+i\s+have|please|get\s+me|show\s+me|suggest|find|look\s+for|search\s+for|give\s+me/gi, "");
     possibleFoodItem = possibleFoodItem.trim();
     
     console.log("Extracted specific item:", possibleFoodItem);
     
-    // 4. If we have a specific food/item name AND budget, do item search with budget
-    if (possibleFoodItem.length > 0 && budget && budgetType) {
-    let url = `/promos/items/search?q=${encodeURIComponent(possibleFoodItem)}&budget=${budget}&type=${budgetType}`;
-
-    if (pax) {
-        url += `&pax=${pax}`;
+    // 4. Construct API URL
+    let baseUrl = "/promos/search";
+    if (possibleFoodItem.length > 0 && !isAllPromos) {
+        baseUrl = "/promos/items/search";
     }
 
-    console.log("URL (specific food with budget):", url);
-    return url;
-}
-    
-    // 5. If we have a specific food/item name but no budget
-   if (possibleFoodItem.length > 0) {
-    let url = `/promos/items/search?q=${encodeURIComponent(possibleFoodItem)}`;
-
-    if (pax) {
-        url += `&pax=${pax}`;
+    let params = [];
+    if (possibleFoodItem.length > 0 && !isAllPromos) {
+        params.push(`q=${encodeURIComponent(possibleFoodItem)}`);
+    } else {
+        params.push("q=all");
     }
 
-    console.log("URL (specific food only):", url);
-    return url;
-}
-    
-    // 6. Budget-only queries (no specific food)
-if (budget && budgetType) {
-    let url = `/promos/search?q=all&budget=${budget}&type=${budgetType}`;
+    if (budget) params.push(`budget=${budget}`);
+    if (budgetType) params.push(`type=${budgetType}`);
+    if (pax) params.push(`pax=${pax}`);
 
-    if (pax) {
-        url += `&pax=${pax}`;
-    }
-
-    console.log("URL (budget only):", url);
-    return url;
+    const finalUrl = `${baseUrl}?${params.join("&")}`;
+    console.log("Generated URL:", finalUrl);
+    return finalUrl;
 }
-
-// 7. Default fallback
-const url = `/promos/search?q=${encodeURIComponent(text)}`;
-console.log("URL (fallback):", url);
-return url;
-}
+     
 
       function extractBudget(text) {
         const number = text.match(/\d+/);
