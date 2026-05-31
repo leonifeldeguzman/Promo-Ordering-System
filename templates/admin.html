@@ -788,9 +788,7 @@
         // =========================
         // CATEGORY (supports both text + dropdown)
         // =========================
-        const category =
-          categoryCell.querySelector("select")?.value ||
-          categoryCell.innerText.trim();
+        const category = categorySelect ? categorySelect.value.trim().toLowerCase() : categoryCell.innerText.trim().toLowerCase();
 
         // =========================
         // STATUS (supports both pill + dropdown)
@@ -802,8 +800,8 @@
 
         const data = {
           name: document.getElementById(`name${id}`).innerText.trim(),
-          category,
-           serving_size: document.getElementById(`serving_size${id}`).innerText.trim(),
+          category: category,
+          serving_size: document.getElementById(`serving_size${id}`).innerText.trim(),
           price: document
             .getElementById(`price${id}`)
             .innerText.replace("₱", "")
@@ -839,7 +837,7 @@
       `;
 
             // OPTIONAL: restore category display as plain text
-            categoryCell.innerText = category;
+            categoryCell.innerText = category.charAt(0).toUpperCase() + category.slice(1);
           });
       }
       document.addEventListener("DOMContentLoaded", function () {
