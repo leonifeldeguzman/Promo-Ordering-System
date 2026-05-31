@@ -58,7 +58,7 @@ def budget_promos(budget):
 
 @promo_routes.route('/promos/category/<string:category>')
 def category_promos(category):
-    results = get_promos_by_category(category)
+    results = get_promos_by_category(category.lower().strip())
     promo_list = []
     
     for promo in results:
@@ -77,7 +77,7 @@ def category_promos(category):
 
 @promo_routes.route('/promos/<string:category>/<int:budget>')
 def category_budget_promos(category, budget):
-    results = get_promos_by_category_and_budget(category, budget)
+    results = get_promos_by_category_and_budget(category.lower().strip(), budget)
     promo_list = []
     
     for promo in results:
