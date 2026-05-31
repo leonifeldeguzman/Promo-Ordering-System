@@ -302,15 +302,16 @@ def promos_page():
 
     results = get_all_promos()
 
-    # get selected category from URL
+    # Get selected category from URL
     selected_category = request.args.get("category", "All")
 
-    # build category list
-    categories = sorted(set([p[2] for p in results if p[2]]))
+    # FIX: Clean strings using .strip().title() to remove spaces and force title-case formatting
+    categories = sorted(list({p[2].strip().title() for p in results if p[2]}))
 
-    # filter promos
+    # filter promos safely
     if selected_category != "All":
-        results = [p for p in results if p[2] == selected_category]
+        # Match against a normalized comparison to prevent missing items due to casing issues
+        results = [p for p in results if p[2] and p[2].strip().title() == selected_category.strip().title()]
 
     return render_template(
         'promos.html',
@@ -318,7 +319,6 @@ def promos_page():
         categories=categories,
         selected_category=selected_category
     )
-
 @promo_routes.route("/promos/search")
 def search_promos():
     try:
