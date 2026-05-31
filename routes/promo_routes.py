@@ -2,7 +2,7 @@ import os
 import re
 from models.promo_model import db_connection
 from werkzeug.utils import secure_filename
-from flask import Blueprint, jsonify, request, redirect, render_template, session
+from flask import Blueprint, jsonify, request, redirect, render_template, session, current_app
 from models.promo_model import (
     get_promos_by_budget,
     get_promos_by_category,
@@ -16,6 +16,28 @@ from models.promo_model import (
 from models.promo_model import update_item_details
 
 promo_routes = Blueprint('promo_routes', __name__)
+
+promo_bp = Blueprint('promo', __name__)
+
+# 1. Check if an environment variable exists, otherwise fall back to local project path
+# Railway automatically sets basic paths, but we use an absolute fallback for production safety
+BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__))) # Gets root directory
+
+UPLOAD_FOLDER = os.environ.get('UPLOAD_DIR', os.path.join(BASE_DIR, 'static', 'uploads'))
+
+# Ensure the folder exists (good practice so Flask doesn't crash)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+@promo_bp.route('/add-promo', methods=['POST'])
+def add_promo():
+    if 'image' in request.files:
+        file = request.files['image']
+        if file.filename != '':
+            # Secure the filename and save to the volume path
+            filename = file.filename
+            file.save(os.path.join(UPLOAD_FOLDER, filename))
+            
+            # Save 'filename' (just the string "burger.jpg") to your database
 
 
 @promo_routes.route('/promos')
