@@ -1,12 +1,16 @@
+from dotenv import load_dotenv
+load_dotenv()  # ← MUST BE FIRST - loads API key before anything else
+
 import os
 from flask import Flask, render_template
 from routes.promo_routes import promo_routes
-from dotenv import load_dotenv
-load_dotenv()
+from routes.ai_routes import ai_bp  # ← Now this can read the API key from .env
 
 app = Flask(__name__)
+app.register_blueprint(ai_bp)
 app.secret_key = "supersecretkey"
 app.register_blueprint(promo_routes)
+
 
 @app.route('/')
 def home():

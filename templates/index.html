@@ -3,16 +3,167 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SpeakNSave — Voice Assistant</title>
+    <title>SpeakNSave — Voice Assistant with AI</title>
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/style.css') }}"
     />
+    <style>
+      /* AI Recommendation Card Styles */
+      .ai-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 15px;
+        margin: 15px 0;
+        animation: fadeIn 0.5s ease;
+      }
+      .ai-card.promo {
+        background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%);
+      }
+      .ai-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+        font-weight: bold;
+      }
+      .ai-item-name {
+        font-size: 1.8rem;
+        margin: 10px 0;
+      }
+      .ai-price {
+        font-size: 1.3rem;
+        font-weight: bold;
+      }
+      .ai-reason {
+        background: rgba(255,255,255,0.2);
+        padding: 10px;
+        border-radius: 10px;
+        margin: 10px 0;
+      }
+      .ai-button {
+        margin-top: 10px;
+        padding: 10px 20px;
+        background: #ff5722;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+      }
+      .ai-button:hover {
+        background: #e64a19;
+      }
+      .loading {
+        text-align: center;
+        padding: 20px;
+      }
+      .dot-animation {
+        animation: blink 1s infinite;
+      }
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+      <a href="/" class="navbar-brand">
+        <span class="brand-logo">S'</span>
+        <div class="brand-text-group">
+          <span class="brand-name">Speak<em>N</em>Save</span>
+          <span class="brand-sub">Voice Assistant with AI 🤖</span>
+        </div>
+      </a>
+      <ul class="navbar-nav">
+        <li><a href="/">Home</a></li>
+        <li><a href="/voice-assistant" class="active">Recommendations</a></li>
+        <li><a href="/promos-page">Promos</a></li>
+        <li><a href="/admin-login">Admin Login</a></li>
+      </ul>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="voice-page-body">
+      <div class="voice-card">
+        <h2>What do you want to eat? </h2>
+
+        <!-- AI Badge -->
+        <div style="text-align: center; margin-bottom: 15px;">
+          <span style="background: #667eea; color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px;">
+             AI-Powered by Google Gemini
+          </span>
+        </div>
+
+        <!-- Mic button -->
+        <button
+          class="mic-circle-btn"
+          id="micBtn"
+          onclick="startVoiceRecognition()"
+          title="Tap to speak"
+        >
+          🎤
+        </button>
+
+        <!-- Default search bar (shown when NOT listening) -->
+        <div class="search-bar-wrapper" id="searchBarWrapper">
+          <div class="search-bar" id="searchBar">
+            <span class="search-icon">🔍</span>
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Try: 'Recommend a meal' or 'Meals under P150'"
+              onkeydown="if (event.key === 'Enter') handleSearchSubmit();"
+            />
+            <button class="send-btn" onclick="handleSearchSubmit()">➤</button>
+          </div>
+        </div>
+
+        <!-- Listening / status bar -->
+        <div class="status-bar hidden" id="statusBar">
+          <span class="kbd-icon">🎤</span>
+          <span id="statusText">Listening... Speak now</span>
+        </div>
+
+        <!-- Suggestion pills -->
+        <div class="try-saying">
+          <p class="try-saying-label">Try saying:</p>
+          <div class="pills-row">
+            <button class="pill-btn" onclick="setPill('Recommend a meal')">
+              🤖 "Recommend a meal"
+            </button>
+            <button class="pill-btn" onclick="setPill('What should I get under 150')">
+              "What should I get under P150"
+            </button>
+            <button class="pill-btn" onclick="setPill('Suggest best promo')">
+              🏷️ "Suggest best promo"
+            </button>
+            <button class="pill-btn" onclick="setPill('Meals under P150')">
+              "Meals under P150"
+            </button>
+            <button class="pill-btn" onclick="setPill('Burger promo')">
+              "Burger promo"
+            </button>
+          </div>
+        </div>
+
+        <!-- Results area (for both AI and regular promos) -->
+        <div id="results"></div>
+      </div>
+    </div>
+
     <script>
-      const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       let recognition = null;
 
+      // ========== UI Helper Functions ==========
       function updateStatus(text, isActive) {
         const bar = document.getElementById("statusBar");
         const barText = document.getElementById("statusText");
@@ -41,10 +192,204 @@
         }
       }
 
+      function setPill(text) {
+        setSearchText(`"${text}"`);
+        // Simulate voice command
+        handleVoiceCommand(text);
+      }
+
+      // ========== SPEAK TEXT FUNCTION ==========
+      function speakText(text) {
+        if ('speechSynthesis' in window) {
+          const speech = new SpeechSynthesisUtterance(text);
+          speech.lang = "en-PH";
+          speech.rate = 0.9;
+          window.speechSynthesis.speak(speech);
+        }
+      }
+
+ // ========== AI RECOMMENDATION FUNCTION (EXACT MARKUP MATCH) ==========
+  async function getAIRecommendation(command, resultsDiv) {
+    resultsDiv.innerHTML = `
+      <div class="loading" style="text-align: center; padding: 20px;">
+        <div style="font-weight: bold; color: var(--yellow); font-size: 1.2rem;">🤖 AI is thinking <span class="dot-animation">...</span></div>
+        <div style="font-size: 14px; margin-top: 5px; color: var(--white);">Analyzing SpeakNSave Menu</div>
+      </div>
+    `;
+    
+    try {
+      const response = await fetch('/api/ai/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: command })
+      });
+      
+      const itemsList = await response.json();
+      
+      if (Array.isArray(itemsList) && itemsList.length > 0) {
+        let cardsHTML = '';
+        
+        itemsList.forEach((data, index) => {
+          const imgSrc = (data.image_url && data.image_url !== 'none') 
+            ? `/static/uploads/${data.image_url}` 
+            : '/static/images/default-food.png';
+            
+          const currentPrice = Math.round(Number(data.price));
+          const originalPrice = data.old_price ? Math.round(Number(data.old_price)) : Math.round(currentPrice * 1.3);
+
+          cardsHTML += `
+            <div class="carousel-card ${index === 0 ? "active" : ""}">
+              <div class="promo-image">
+                <img src="${imgSrc}" alt="${escapeHtml(data.recommended_item)}">
+                <span class="promo-tag">Promo</span>
+              </div>
+              <div class="card-content">
+                <h3>${escapeHtml(data.recommended_item)}</h3>
+                <p>${escapeHtml(data.reason)}</p>
+                <div class="price-row">
+                  <span class="old-price">₱${originalPrice}</span>
+                  <span class="new-price">₱${currentPrice}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        const trackId = 'ai-rec-track';
+
+        resultsDiv.innerHTML = `
+          <div class="results-wrapper">
+            <div class="results-header">
+              <h2>DEALS OFFERED</h2>
+              <div class="matches-badge">Matches : ${itemsList.length}</div>
+            </div>
+            
+            <div class="carousel-container">
+              <button class="carousel-btn left" onclick="scrollCarousel('${trackId}', -1)">&#10094;</button>
+              <div id="${trackId}" class="carousel-track">
+                 ${cardsHTML}
+              </div>
+              <button class="carousel-btn right" onclick="scrollCarousel('${trackId}', 1)">&#10095;</button>
+            </div>
+
+            <div class="results-footer">
+              <button class="retry-btn" onclick="location.reload()">Try Again</button>
+              <button class="view-btn" onclick="window.location.href='/promos-page'">View All Promos</button>
+            </div>
+          </div>
+        `;
+        
+        speakText(`I found ${itemsList.length} matching deals.`);
+      } else {
+        resultsDiv.innerHTML = `
+          <div style="background: var(--yellow); color: var(--black); padding: 15px; border-radius: 10px; text-align: center; font-weight: bold;">
+            🤖 No matching items found right now.
+          </div>
+        `;
+      }
+    } catch (error) {
+      console.error('AI error:', error);
+      resultsDiv.innerHTML = `
+        <div style="background: #e74c3c; color: white; padding: 15px; border-radius: 10px; text-align: center;">
+          ⚠️ AI service temporarily unavailable. Please try again later.
+        </div>
+      `;
+    }
+  }
+
+  // ========== AI PROMO SUGGESTION (EXACT MARKUP MATCH) ==========
+  async function getAIPromoSuggestion(command, resultsDiv) {
+    resultsDiv.innerHTML = `
+      <div class="loading" style="text-align: center; padding: 20px;">
+        <div style="font-weight: bold; color: var(--yellow); font-size: 1.2rem;">🏷️ 🤖 Finding best promo deals...</div>
+      </div>
+    `;
+    
+    try {
+      const response = await fetch('/api/ai/suggest-promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ craving: command })
+      });
+      
+      const promosList = await response.json();
+      
+      if (Array.isArray(promosList) && promosList.length > 0) {
+        let cardsHTML = '';
+        
+        promosList.forEach((data, index) => {
+          const imgSrc = (data.image_url && data.image_url !== 'none') 
+            ? `/static/uploads/${data.image_url}` 
+            : '/static/images/default-food.png';
+
+          const currentPrice = Math.round(Number(data.price));
+          const originalPrice = data.old_price ? Math.round(Number(data.old_price)) : Math.round(currentPrice * 1.3);
+
+          cardsHTML += `
+            <div class="carousel-card ${index === 0 ? "active" : ""}">
+              <div class="promo-image">
+                <img src="${imgSrc}" alt="${escapeHtml(data.suggestion)}">
+                <span class="promo-tag">Promo</span>
+              </div>
+              <div class="card-content">
+                <h3>${escapeHtml(data.suggestion)}</h3>
+                <p>💡 ${escapeHtml(data.why)} <br><strong style="color: var(--green);">Savings: ${escapeHtml(data.savings)}</strong></p>
+                <div class="price-row">
+                  <span class="old-price">₱${originalPrice}</span>
+                  <span class="new-price">₱${currentPrice}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        const trackId = 'ai-promo-track';
+
+        resultsDiv.innerHTML = `
+          <div class="results-wrapper">
+            <div class="results-header">
+              <h2>DEALS OFFERED</h2>
+              <div class="matches-badge">Matches : ${promosList.length}</div>
+            </div>
+            
+            <div class="carousel-container">
+              <button class="carousel-btn left" onclick="scrollCarousel('${trackId}', -1)">&#10094;</button>
+              <div id="${trackId}" class="carousel-track">
+                 ${cardsHTML}
+              </div>
+              <button class="carousel-btn right" onclick="scrollCarousel('${trackId}', 1)">&#10095;</button>
+            </div>
+
+            <div class="results-footer">
+              <button class="retry-btn" onclick="location.reload()">Try Again</button>
+              <button class="view-btn" onclick="window.location.href='/promos-page'">View All Promos</button>
+            </div>
+          </div>
+        `;
+        speakText(`I found some promo deals for you.`);
+      } else {
+        resultsDiv.innerHTML = `<p style="text-align:center; color: var(--white);">⚠️ No promo suggestions found.</p>`;
+      }
+    } catch (error) {
+      console.error('Promo AI error:', error);
+      resultsDiv.innerHTML = `<p style="text-align:center; color:#e74c3c;">⚠️ Promo suggestion unavailable. Try regular search.</p>`;
+    }
+  }
+
+  // ========== SCROLL HELPER ENGINE ==========
+  function scrollCarousel(trackId, direction) {
+    const track = document.getElementById(trackId);
+    if (!track) return;
+    const scrollAmount = 320 * direction; 
+    track.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  }
+       
+      // ========== REGULAR PROMO SEARCH ==========
       async function fetchPromos(url) {
         const response = await fetch(url);
         return await response.json();
       }
+
       function renderPromos(data) {
         const resultsDiv = document.getElementById("results");
         resultsDiv.innerHTML = "";
@@ -54,355 +399,150 @@
         if (!data || data.length === 0) {
           resultsDiv.innerHTML = `
             <div class="results-header">
-                <h2>OTHER OPTIONS</h2>
-                <div class="matches-badge">Matches : 0</div>
+              <h2>OTHER OPTIONS</h2>
+              <div class="matches-badge">Matches : 0</div>
             </div>
-            <p class="empty-text">
-                We couldn't find an exact match.
-            </p>
-        `;
-
+            <p class="empty-text">We couldn't find an exact match.</p>
+          `;
           reply = "Sorry, no promos found.";
         } else {
           reply = `I found ${data.length} promos for you.`;
-
           let cardsHTML = "";
-
           data.forEach((promo, index) => {
             cardsHTML += `
-                <div class="carousel-card ${index === 0 ? "active" : ""}">
-                    <div class="promo-image">
-                        ${promo.image_url ? `<img src="/static/${promo.image_url}" alt="${promo.name}">` : ""}
-                        <span class="promo-tag">${promo.tag || "Promo"}</span>
-                    </div>
-
-                    <div class="card-content">
-                        <h3>${promo.name}</h3>
-                        <p>${promo.description}</p>
-
-                        <div class="price-row">
-                            <span class="old-price">₱${Math.round(Number(promo.price) + 40)}</span>
-                            <span class="new-price">₱${Math.round(Number(promo.price))}</span>
-                        </div>
-                    </div>
+              <div class="carousel-card ${index === 0 ? "active" : ""}">
+                <div class="promo-image">
+                  ${promo.image_url ? `<img src="/static/${promo.image_url}" alt="${promo.name}">` : ""}
+                  <span class="promo-tag">${promo.tag || "Promo"}</span>
                 </div>
+                <div class="card-content">
+                  <h3>${escapeHtml(promo.name)}</h3>
+                  <p>${escapeHtml(promo.description)}</p>
+                  <div class="price-row">
+                    <span class="old-price">₱${Math.round(Number(promo.price) + 40)}</span>
+                    <span class="new-price">₱${Math.round(Number(promo.price))}</span>
+                  </div>
+                </div>
+              </div>
             `;
           });
-
           resultsDiv.innerHTML = `
             <div class="results-wrapper">
-                <div class="results-header">
-                    <h2>DEALS OFFERED</h2>
-                    <div class="matches-badge">Matches : ${data.length}</div>
-                </div>
-
-                <div class="carousel-container">
-                    <button class="carousel-btn left">&#10094;</button>
-
-                    <div class="carousel-track">
-                        ${cardsHTML}
-                    </div>
-
-                    <button class="carousel-btn right">&#10095;</button>
-                </div>
-
-                <div class="results-footer">
-                    <button class="retry-btn" onclick="location.reload()">Try Again</button>
-                    <button class="view-btn" onclick="window.location.href='/promos-page'">View All Promos</button>
-                </div>
+              <div class="results-header">
+                <h2>DEALS OFFERED</h2>
+                <div class="matches-badge">Matches : ${data.length}</div>
+              </div>
+              <div class="carousel-container">
+                <button class="carousel-btn left">&#10094;</button>
+                <div class="carousel-track">${cardsHTML}</div>
+                <button class="carousel-btn right">&#10095;</button>
+              </div>
+              <div class="results-footer">
+                <button class="retry-btn" onclick="location.reload()">Try Again</button>
+                <button class="view-btn" onclick="window.location.href='/promos-page'">View All Promos</button>
+              </div>
             </div>
-        `;
-
+          `;
           initializeCarousel();
         }
-
-        const speech = new SpeechSynthesisUtterance(reply);
-        speech.lang = "en-US";
-        window.speechSynthesis.speak(speech);
+        speakText(reply);
       }
+
       function initializeCarousel() {
         const track = document.querySelector(".carousel-track");
-
         const leftBtn = document.querySelector(".carousel-btn.left");
-
         const rightBtn = document.querySelector(".carousel-btn.right");
-
         if (!track || !leftBtn || !rightBtn) return;
-
         const scrollAmount = 320;
-
-        rightBtn.addEventListener("click", () => {
-          track.scrollBy({
-            left: scrollAmount,
-            behavior: "smooth",
-          });
-        });
-
-        leftBtn.addEventListener("click", () => {
-          track.scrollBy({
-            left: -scrollAmount,
-            behavior: "smooth",
-          });
-        });
+        rightBtn.addEventListener("click", () => track.scrollBy({ left: scrollAmount, behavior: "smooth" }));
+        leftBtn.addEventListener("click", () => track.scrollBy({ left: -scrollAmount, behavior: "smooth" }));
       }
 
+      // ========== MAIN VOICE COMMAND HANDLER (WITH AI) ==========
+      async function handleVoiceCommand(transcript) {
+        const resultsDiv = document.getElementById("results");
+        const lowerCommand = transcript.toLowerCase();
+        
+        // CHECK FOR AI COMMANDS FIRST
+        if (lowerCommand.includes("recommend") || 
+            lowerCommand.includes("suggest") || 
+            lowerCommand.includes("what should i get") ||
+            lowerCommand.includes("what do you recommend") ||
+            lowerCommand.includes("help me decide") ||
+            lowerCommand.includes("what's good")) {
+          await getAIRecommendation(transcript, resultsDiv);
+          return;
+        }
+        
+        // CHECK FOR PROMO SUGGESTION
+        if (lowerCommand.includes("best promo") || 
+            lowerCommand.includes("suggest promo") ||
+            lowerCommand.includes("value meal") ||
+            lowerCommand.includes("sulit")) {
+          await getAIPromoSuggestion(transcript, resultsDiv);
+          return;
+        }
+        
+        // REGULAR SEARCH (existing logic)
+        const urls = processQuery(transcript);
+        const resultsArrays = await Promise.all(urls.map(url => fetchPromos(url)));
+        const merged = resultsArrays.flat();
+        renderPromos(merged);
+      }
+
+      // ========== EXISTING PROCESSING FUNCTIONS ==========
       function processQuery(transcript) {
         let text = transcript.toLowerCase().trim();
-
         text = text.replace(/(?:₱|php|p)(\d+)/gi, "$1");
-
-        const clauses = text
-          .split(/\band\b/)
-          .map((c) => c.trim())
-          .filter(Boolean);
-
-        const urls = clauses.map((clause) => processSingleQuery(clause));
-
-        return urls;
+        const clauses = text.split(/\band\b/).map(c => c.trim()).filter(Boolean);
+        return clauses.map(clause => processSingleQuery(clause));
       }
 
       function processSingleQuery(transcript) {
         let text = transcript.toLowerCase().trim();
-
-        // Normalize currency shorthand: ₱150, php150, p150 → 150
         text = text.replace(/(?:₱|php|p)(\d+)/gi, "$1");
-
-        console.log("Processing:", text);
-
-        // ==========================================
-        // INNER UTILITY: Dynamic Text-to-Number Parser
-        // ==========================================
+        
         const textToNumber = (inputStr) => {
-          const words = {
-            zero: 0,
-            one: 1,
-            two: 2,
-            three: 3,
-            four: 4,
-            five: 5,
-            six: 6,
-            seven: 7,
-            eight: 8,
-            nine: 9,
-            ten: 10,
-            eleven: 11,
-            twelve: 12,
-            thirteen: 13,
-            fourteen: 14,
-            fifteen: 15,
-            sixteen: 16,
-            seventeen: 17,
-            eighteen: 18,
-            nineteen: 19,
-            twenty: 20,
-            thirty: 30,
-            forty: 40,
-            fifty: 50,
-            sixty: 60,
-            seventy: 70,
-            eighty: 80,
-            ninety: 90,
-          };
-          const scales = {
-            hundred: 100,
-            thousand: 1000,
-            million: 1000000,
-            billion: 1000000000,
-          };
-          const tokens = inputStr
-            .toLowerCase()
-            .replace(/[^a-z0-9\s]/g, "")
-            .split(/\s+/);
-          let currentResult = 0,
-            finalResult = 0,
-            hasNumber = false;
+          const words = { zero:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10, eleven:11, twelve:12, thirteen:13, fourteen:14, fifteen:15, sixteen:16, seventeen:17, eighteen:18, nineteen:19, twenty:20, thirty:30, forty:40, fifty:50, sixty:60, seventy:70, eighty:80, ninety:90 };
+          const scales = { hundred:100, thousand:1000 };
+          const tokens = inputStr.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/);
+          let currentResult = 0, finalResult = 0, hasNumber = false;
           for (let word of tokens) {
-            if (words[word] !== undefined) {
-              currentResult += words[word];
-              hasNumber = true;
-            } else if (scales[word] !== undefined) {
-              currentResult *= scales[word];
-              if (word !== "hundred") {
-                finalResult += currentResult;
-                currentResult = 0;
-              }
-              hasNumber = true;
-            } else if (!isNaN(word) && word !== "") {
-              currentResult += parseInt(word);
-              hasNumber = true;
-            }
+            if (words[word] !== undefined) { currentResult += words[word]; hasNumber = true; }
+            else if (scales[word] !== undefined) { currentResult *= scales[word]; finalResult += currentResult; currentResult = 0; hasNumber = true; }
+            else if (!isNaN(word) && word !== "") { currentResult += parseInt(word); hasNumber = true; }
           }
           finalResult += currentResult;
           return hasNumber ? finalResult : null;
         };
-
-        // ==========================================
-        // STEP 1: Extract pax
-        // ==========================================
+        
         let pax = null;
-        const paxMatch = text.match(
-          /(?:for|feed|good for|pax|people|persons?)\s+([a-z0-9\s]+?)(?:$|\s+(?:under|below|above|over|pesos|php|p\d))/i,
-        );
-        if (paxMatch) {
-          const parsedPax = textToNumber(paxMatch[1]);
-          if (parsedPax !== null) {
-            pax = parsedPax;
-            text = text.replace(paxMatch[0], "").trim();
-          }
-        }
-        console.log("Pax:", pax);
-
-        // ==========================================
-        // STEP 2: Extract budget
-        // ==========================================
-        //
-        // Only treat a number as a budget when it has EXPLICIT budget context:
-        //   - A budget keyword before it: "under 150", "below one hundred"
-        //   - A currency word after it: "150 pesos"
-        //   - A bare digit (e.g. "150") — safe since digits rarely appear in menu names
-        //
-        // This prevents "two burgers" from treating "two" as budget=2.
-        // ==========================================
         let budget = null;
         let budgetType = null;
-
-        if (/under|below|less than/.test(transcript)) budgetType = "under";
-        else if (/above|over|more than/.test(transcript)) budgetType = "above";
-
-        // Pattern A: budget keyword BEFORE the number: "under 150", "below one fifty"
-        const budgetKeywordMatch = text.match(
-          /\b(?:under|below|less than|above|over|more than|budget of)\s+([a-z0-9][a-z0-9\s]*?)(?:\s*(?:pesos|php)\b|\s*$)/i,
-        );
-        // Pattern B: currency word AFTER: "150 pesos", "one hundred php"
-        const budgetCurrencyMatch = text.match(
-          /\b([a-z0-9][a-z0-9\s]*?)\s+(?:pesos|php)\b/i,
-        );
-
-        if (budgetKeywordMatch) {
-          const parsed = textToNumber(budgetKeywordMatch[1].trim());
-          if (parsed !== null) budget = parsed;
-        } else if (budgetCurrencyMatch) {
-          const parsed = textToNumber(budgetCurrencyMatch[1].trim());
-          if (parsed !== null) budget = parsed;
-        } else {
-          // Pattern C: bare digit only — digits alone are safe to treat as budget
-          const bareDigit = text.match(/\b(\d+)\b/);
-          if (bareDigit) budget = parseInt(bareDigit[1]);
-        }
-
-        // ==========================================
-        // STEP 3: Check for "show all" intent
-        // ==========================================
-        const isAllPromos =
-          /\b(all|everything|menu)\b/.test(transcript) && !budget && !pax;
-
-        // ==========================================
-        // STEP 4: Extract food item terms
-        //
-        // Strategy:
-        //   a) Remove intent phrases ("i want", "show me", etc.)
-        //   b) Remove budget/pax noise
-        //   c) Split on "and", comma, "&" to get individual item phrases
-        //   d) Strip leftover noise words from each phrase
-        //   e) Drop empty / single-char terms
-        // ==========================================
-        const NOISE_PATTERN =
-          /\b(under|below|less than|above|over|more than|pesos|php|budget of|meals|food|items|promos|deals|offers|good|for|people|pax|person|persons|meal|item|promo|deal|offer)\b/gi;
-        const INTENT_PATTERN =
-          /\b(i want|i need|can i have|please|get me|show me|suggest|find|look for|search for|give me|i'd like|id like|may i have)\b/gi;
-
-        let foodText = text;
-        foodText = foodText.replace(INTENT_PATTERN, " ");
-        foodText = foodText.replace(NOISE_PATTERN, " ");
-        if (budget)
-          foodText = foodText.replace(new RegExp(`\\b${budget}\\b`, "g"), " ");
-        foodText = foodText.trim();
-
-        // Split on natural separators to get individual item phrases
-        const rawTerms = foodText
-          .split(/\band\b|,|&/)
-          .map((t) => t.trim().replace(/\s+/g, " "))
-          .filter((t) => t.length > 1);
-
-        // Further clean each term: remove leftover single noise words
-        const SINGLE_STOP = new Set([
-          "a",
-          "an",
-          "the",
-          "some",
-          "of",
-          "with",
-          "or",
-          "also",
-          "too",
-          "plus",
-          "want",
-          "need",
-          "me",
-          "i",
-        ]);
-        const searchTerms = rawTerms
-          .map((t) =>
-            t
-              .split(" ")
-              .filter((w) => !SINGLE_STOP.has(w) && w.length > 1)
-              .join(" "),
-          )
-          .filter((t) => t.length > 1);
-
-        console.log("Search terms:", searchTerms);
-
-        // ==========================================
-        // STEP 5: Build the API URL
-        // ==========================================
-        let baseUrl,
-          params = [];
-
-        if (isAllPromos || searchTerms.length === 0) {
-          // No specific items detected → broad search
-          baseUrl = "/promos/search";
-          params.push("q=all");
-        } else {
-          // Specific items detected → item search with individual terms
-          baseUrl = "/promos/items/search";
-          // Send terms as comma-separated list (new backend param)
-          params.push(`terms=${encodeURIComponent(searchTerms.join(","))}`);
-        }
-
+        
+        const paxMatch = text.match(/(?:for|feed|good for|pax|people|persons?)\s+([a-z0-9\s]+?)(?:$|\s+(?:under|below|above|over|pesos|php|p\d))/i);
+        if (paxMatch) { const parsed = textToNumber(paxMatch[1]); if (parsed) pax = parsed; }
+        
+        if (/under|below|less than/.test(text)) budgetType = "under";
+        else if (/above|over|more than/.test(text)) budgetType = "above";
+        
+        const budgetMatch = text.match(/\b(\d+)\b/);
+        if (budgetMatch) budget = parseInt(budgetMatch[1]);
+        
+        const isAllPromos = /\b(all|everything|menu)\b/.test(text) && !budget && !pax;
+        
+        let baseUrl, params = [];
+        if (isAllPromos) { baseUrl = "/promos/search"; params.push("q=all"); }
+        else { baseUrl = "/promos/search"; params.push(`q=${encodeURIComponent(text)}`); }
+        
         if (budget) params.push(`budget=${budget}`);
-        if (budgetType) params.push(`type=${budgetType}`);
+        if (budgetType) params.push(`type=${budgetType === "under" ? "below" : "above"}`);
         if (pax) params.push(`pax=${pax}`);
-
-        const finalUrl = `${baseUrl}?${params.join("&")}`;
-        console.log("Generated URL:", finalUrl);
-        return finalUrl;
+        
+        return `${baseUrl}?${params.join("&")}`;
       }
 
-      function extractBudget(text) {
-        const number = text.match(/\d+/);
-        const value = number ? number[0] : null;
-
-        let type = "exact";
-
-        if (
-          text.includes("below") ||
-          text.includes("under") ||
-          text.includes("less than")
-        ) {
-          type = "lte";
-        }
-
-        if (
-          text.includes("above") ||
-          text.includes("over") ||
-          text.includes("more than")
-        ) {
-          type = "gte";
-        }
-
-        return { value, type };
-      }
-
+      // ========== VOICE RECOGNITION ==========
       function startVoiceRecognition() {
         if (!SpeechRecognition) {
           alert("Speech recognition is not supported in this browser.");
@@ -410,29 +550,20 @@
         }
 
         recognition = new SpeechRecognition();
-        recognition.lang = "en-US";
+        recognition.lang = "en-PH";
         recognition.interimResults = false;
 
         updateStatus("Listening... Speak now", true);
         setSearchText("");
 
-        recognition.onresult = async function (event) {
+        recognition.onresult = async function(event) {
           const transcript = event.results[0][0].transcript;
           setSearchText(`"${transcript}"`);
           updateStatus("", false);
-
-          const urls = processQuery(transcript);
-
-          const resultsArrays = await Promise.all(
-            urls.map((url) => fetchPromos(url)),
-          );
-
-          const merged = resultsArrays.flat();
-
-          renderPromos(merged);
+          await handleVoiceCommand(transcript);
         };
 
-        recognition.onerror = function (e) {
+        recognition.onerror = function(e) {
           if (e.error === "aborted" || e.error === "no-speech") {
             updateStatus("", false);
             setSearchText("Cancelled. Tap to speak again.");
@@ -442,7 +573,7 @@
           }
         };
 
-        recognition.onend = function () {
+        recognition.onend = function() {
           document.getElementById("micBtn").classList.remove("listening");
         };
 
@@ -452,97 +583,22 @@
       async function handleSearchSubmit() {
         const text = document.getElementById("searchInput").value.trim();
         if (!text) return;
-
-        const urls = processQuery(text);
-
-        const resultsArrays = await Promise.all(
-          urls.map((url) => fetchPromos(url)),
-        );
-
-        const merged = resultsArrays.flat();
-
-        renderPromos(merged);
+        await handleVoiceCommand(text);
       }
 
-      function setPill(text) {
-        setSearchText(`"${text}"`);
-        const url = processQuery(text);
-        fetchAndRender(url);
+      function addToCart(itemName, price) {
+        alert(`✅ Added "${itemName}" (₱${price}) to your order!`);
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+          if (m === '&') return '&amp;';
+          if (m === '<') return '&lt;';
+          if (m === '>') return '&gt;';
+          return m;
+        });
       }
     </script>
-  </head>
-  <body>
-    <!-- NAVBAR -->
-    <nav class="navbar">
-      <a href="/" class="navbar-brand">
-        <span class="brand-logo">S'</span>
-        <div class="brand-text-group">
-          <span class="brand-name">Speak<em>N</em>Save</span>
-          <span class="brand-sub">Voice Assistant</span>
-        </div>
-      </a>
-      <ul class="navbar-nav">
-        <li><a href="/">Home</a></li>
-        <li><a href="/voice-assistant" class="active">Recommendations</a></li>
-        <li><a href="/promos-page">Promos</a></li>
-        <li><a href="/admin-login">Admin Login</a></li>
-      </ul>
-    </nav>
-
-    <!-- RED BG WRAPPER -->
-    <div class="voice-page-body">
-      <div class="voice-card">
-        <h2>What do you want to eat?</h2>
-
-        <!-- Mic button -->
-        <button
-          class="mic-circle-btn"
-          id="micBtn"
-          onclick="startVoiceRecognition()"
-          title="Tap to speak"
-        >
-          🎤
-        </button>
-
-        <!-- Default search bar (shown when NOT listening) -->
-        <div class="search-bar-wrapper" id="searchBarWrapper">
-          <div class="search-bar" id="searchBar">
-            <span class="search-icon">🔍</span>
-            <input
-              type="text"
-              id="searchInput"
-              placeholder="Search here or tap the mic"
-              onkeydown="if (event.key === 'Enter') handleSearchSubmit();"
-            />
-            <button class="send-btn" onclick="handleSearchSubmit()">➤</button>
-          </div>
-        </div>
-
-        <!-- Listening / status bar (shown WHEN listening or after error) -->
-        <div class="status-bar hidden" id="statusBar">
-          <span class="kbd-icon">⌨️</span>
-          <span id="statusText">Listening... Speak now</span>
-        </div>
-
-        <!-- Suggestion pills -->
-        <div class="try-saying">
-          <p class="try-saying-label">Try saying:</p>
-          <div class="pills-row">
-            <button class="pill-btn" onclick="setPill('Meals under P150')">
-              "Meals under P150"
-            </button>
-            <button class="pill-btn" onclick="setPill('Chicken Promo')">
-              "Chicken Promo"
-            </button>
-            <button class="pill-btn" onclick="setPill('Good for 4 people')">
-              "Good for 4 people"
-            </button>
-          </div>
-        </div>
-
-        <!-- Results area -->
-        <div id="results"></div>
-      </div>
-    </div>
   </body>
 </html>
