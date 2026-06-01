@@ -41,123 +41,84 @@
         }
       }
 
-      async function fetchAndRender(url) {
-        try {
-          const response = await fetch(url);
-          const data = await response.json();
+      async function fetchPromos(url) {
+        const response = await fetch(url);
+        return await response.json();
+      }
+      function renderPromos(data) {
+        const resultsDiv = document.getElementById("results");
+        resultsDiv.innerHTML = "";
 
-          const resultsDiv = document.getElementById("results");
-          resultsDiv.innerHTML = "";
+        let reply = "";
 
-          let reply = "";
+        if (!data || data.length === 0) {
+          resultsDiv.innerHTML = `
+            <div class="results-header">
+                <h2>OTHER OPTIONS</h2>
+                <div class="matches-badge">Matches : 0</div>
+            </div>
+            <p class="empty-text">
+                We couldn't find an exact match.
+            </p>
+        `;
 
-          if (!data || data.length === 0) {
-            resultsDiv.innerHTML = `
+          reply = "Sorry, no promos found.";
+        } else {
+          reply = `I found ${data.length} promos for you.`;
+
+          let cardsHTML = "";
+
+          data.forEach((promo, index) => {
+            cardsHTML += `
+                <div class="carousel-card ${index === 0 ? "active" : ""}">
+                    <div class="promo-image">
+                        ${promo.image_url ? `<img src="/static/${promo.image_url}" alt="${promo.name}">` : ""}
+                        <span class="promo-tag">${promo.tag || "Promo"}</span>
+                    </div>
+
+                    <div class="card-content">
+                        <h3>${promo.name}</h3>
+                        <p>${promo.description}</p>
+
+                        <div class="price-row">
+                            <span class="old-price">₱${Math.round(Number(promo.price) + 40)}</span>
+                            <span class="new-price">₱${Math.round(Number(promo.price))}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+          });
+
+          resultsDiv.innerHTML = `
+            <div class="results-wrapper">
                 <div class="results-header">
-                    <h2>OTHER OPTIONS</h2>
-                    <div class="matches-badge">Matches : 0</div>
+                    <h2>DEALS OFFERED</h2>
+                    <div class="matches-badge">Matches : ${data.length}</div>
                 </div>
 
-                <p class="empty-text">
-                    We couldn't find an exact match.
-                </p>
-            `;
+                <div class="carousel-container">
+                    <button class="carousel-btn left">&#10094;</button>
 
-            reply = "Sorry, no promos found.";
-          } else {
-            reply = `I found ${data.length} promos for you.`;
-
-            let cardsHTML = "";
-
-            data.forEach((promo, index) => {
-              cardsHTML += `
-                    <div class="carousel-card ${index === 0 ? "active" : ""}">
-                        
-                        <div class="promo-image">
-                          ${
-                            promo.image_url
-                              ? `<img src="/static/${promo.image_url}" alt="${promo.name}">`
-                              : ""
-                          }
-                            
-                            <span class="promo-tag">
-                                ${promo.tag || "Promo"}
-                            </span>
-                        </div>
-
-                        <div class="card-content">
-                            <h3>${promo.name}</h3>
-
-                            <p>
-                                ${promo.description}
-                            </p>
-
-                            <div class="price-row">
-                            <span class="old-price">
-                                ₱${Math.round(Number(promo.price) + 40)}
-                            </span>
-
-                            <span class="new-price">
-                                ₱${Math.round(Number(promo.price))}
-                            </span>
-                        </div>
-                        </div>
-
-                    </div>
-                `;
-            });
-
-            resultsDiv.innerHTML = `
-                <div class="results-wrapper">
-
-                    <div class="results-header">
-                        <h2>DEALS OFFERED</h2>
-
-                        <div class="matches-badge">
-                            Matches : ${data.length}
-                        </div>
+                    <div class="carousel-track">
+                        ${cardsHTML}
                     </div>
 
-                    <div class="carousel-container">
-
-                        <button class="carousel-btn left">
-                            &#10094;
-                        </button>
-
-                        <div class="carousel-track">
-                            ${cardsHTML}
-                        </div>
-
-                        <button class="carousel-btn right">
-                            &#10095;
-                        </button>
-
-                    </div>
-
-                    <div class="results-footer">
-
-                        <button class="retry-btn" onclick="location.reload()">
-                            Try Again
-                        </button>
-
-                        <button class="view-btn" onclick="window.location.href='/promos-page'">
-                            View All Promos
-                        </button>
-
-                    </div>
-
+                    <button class="carousel-btn right">&#10095;</button>
                 </div>
-            `;
-            initializeCarousel();
-          }
 
-          const speech = new SpeechSynthesisUtterance(reply);
-          speech.lang = "en-US";
+                <div class="results-footer">
+                    <button class="retry-btn" onclick="location.reload()">Try Again</button>
+                    <button class="view-btn" onclick="window.location.href='/promos-page'">View All Promos</button>
+                </div>
+            </div>
+        `;
 
-          window.speechSynthesis.speak(speech);
-        } catch (err) {
-          console.error(err);
+          initializeCarousel();
         }
+
+        const speech = new SpeechSynthesisUtterance(reply);
+        speech.lang = "en-US";
+        window.speechSynthesis.speak(speech);
       }
       function initializeCarousel() {
         const track = document.querySelector(".carousel-track");
@@ -184,164 +145,245 @@
           });
         });
       }
-function processQuery(transcript) {
-    let text = transcript.toLowerCase().trim();
- 
-    // Normalize currency shorthand: ₱150, php150, p150 → 150
-    text = text.replace(/(?:₱|php|p)(\d+)/gi, "$1");
- 
-    console.log("Processing:", text);
- 
-    // ==========================================
-    // INNER UTILITY: Dynamic Text-to-Number Parser
-    // ==========================================
-    const textToNumber = (inputStr) => {
-        const words = {
-            'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,'ten':10,
-            'eleven':11,'twelve':12,'thirteen':13,'fourteen':14,'fifteen':15,'sixteen':16,'seventeen':17,'eighteen':18,'nineteen':19,
-            'twenty':20,'thirty':30,'forty':40,'fifty':50,'sixty':60,'seventy':70,'eighty':80,'ninety':90
+
+      function processQuery(transcript) {
+        let text = transcript.toLowerCase().trim();
+
+        text = text.replace(/(?:₱|php|p)(\d+)/gi, "$1");
+
+        const clauses = text
+          .split(/\band\b/)
+          .map((c) => c.trim())
+          .filter(Boolean);
+
+        const urls = clauses.map((clause) => processSingleQuery(clause));
+
+        return urls;
+      }
+
+      function processSingleQuery(transcript) {
+        let text = transcript.toLowerCase().trim();
+
+        // Normalize currency shorthand: ₱150, php150, p150 → 150
+        text = text.replace(/(?:₱|php|p)(\d+)/gi, "$1");
+
+        console.log("Processing:", text);
+
+        // ==========================================
+        // INNER UTILITY: Dynamic Text-to-Number Parser
+        // ==========================================
+        const textToNumber = (inputStr) => {
+          const words = {
+            zero: 0,
+            one: 1,
+            two: 2,
+            three: 3,
+            four: 4,
+            five: 5,
+            six: 6,
+            seven: 7,
+            eight: 8,
+            nine: 9,
+            ten: 10,
+            eleven: 11,
+            twelve: 12,
+            thirteen: 13,
+            fourteen: 14,
+            fifteen: 15,
+            sixteen: 16,
+            seventeen: 17,
+            eighteen: 18,
+            nineteen: 19,
+            twenty: 20,
+            thirty: 30,
+            forty: 40,
+            fifty: 50,
+            sixty: 60,
+            seventy: 70,
+            eighty: 80,
+            ninety: 90,
+          };
+          const scales = {
+            hundred: 100,
+            thousand: 1000,
+            million: 1000000,
+            billion: 1000000000,
+          };
+          const tokens = inputStr
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, "")
+            .split(/\s+/);
+          let currentResult = 0,
+            finalResult = 0,
+            hasNumber = false;
+          for (let word of tokens) {
+            if (words[word] !== undefined) {
+              currentResult += words[word];
+              hasNumber = true;
+            } else if (scales[word] !== undefined) {
+              currentResult *= scales[word];
+              if (word !== "hundred") {
+                finalResult += currentResult;
+                currentResult = 0;
+              }
+              hasNumber = true;
+            } else if (!isNaN(word) && word !== "") {
+              currentResult += parseInt(word);
+              hasNumber = true;
+            }
+          }
+          finalResult += currentResult;
+          return hasNumber ? finalResult : null;
         };
-        const scales = { 'hundred':100,'thousand':1000,'million':1000000,'billion':1000000000 };
-        const tokens = inputStr.toLowerCase().replace(/[^a-z0-9\s]/g,'').split(/\s+/);
-        let currentResult = 0, finalResult = 0, hasNumber = false;
-        for (let word of tokens) {
-            if (words[word] !== undefined) { currentResult += words[word]; hasNumber = true; }
-            else if (scales[word] !== undefined) {
-                currentResult *= scales[word];
-                if (word !== 'hundred') { finalResult += currentResult; currentResult = 0; }
-                hasNumber = true;
-            } else if (!isNaN(word) && word !== "") { currentResult += parseInt(word); hasNumber = true; }
-        }
-        finalResult += currentResult;
-        return hasNumber ? finalResult : null;
-    };
- 
-    // ==========================================
-    // STEP 1: Extract pax
-    // ==========================================
-    let pax = null;
-    const paxMatch = text.match(/(?:for|feed|good for|pax|people|persons?)\s+([a-z0-9\s]+?)(?:$|\s+(?:under|below|above|over|pesos|php|p\d))/i);
-    if (paxMatch) {
-        const parsedPax = textToNumber(paxMatch[1]);
-        if (parsedPax !== null) {
+
+        // ==========================================
+        // STEP 1: Extract pax
+        // ==========================================
+        let pax = null;
+        const paxMatch = text.match(
+          /(?:for|feed|good for|pax|people|persons?)\s+([a-z0-9\s]+?)(?:$|\s+(?:under|below|above|over|pesos|php|p\d))/i,
+        );
+        if (paxMatch) {
+          const parsedPax = textToNumber(paxMatch[1]);
+          if (parsedPax !== null) {
             pax = parsedPax;
             text = text.replace(paxMatch[0], "").trim();
+          }
         }
-    }
-    console.log("Pax:", pax);
- 
-    // ==========================================
-    // STEP 2: Extract budget
-    // ==========================================
-    //
-    // Only treat a number as a budget when it has EXPLICIT budget context:
-    //   - A budget keyword before it: "under 150", "below one hundred"
-    //   - A currency word after it: "150 pesos"
-    //   - A bare digit (e.g. "150") — safe since digits rarely appear in menu names
-    //
-    // This prevents "two burgers" from treating "two" as budget=2.
-    // ==========================================
-    let budget = null;
-    let budgetType = null;
- 
-    if (/under|below|less than/.test(transcript)) budgetType = "under";
-    else if (/above|over|more than/.test(transcript)) budgetType = "above";
- 
-    // Pattern A: budget keyword BEFORE the number: "under 150", "below one fifty"
-    const budgetKeywordMatch = text.match(
-        /\b(?:under|below|less than|above|over|more than|budget of)\s+([a-z0-9][a-z0-9\s]*?)(?:\s*(?:pesos|php)\b|\s*$)/i
-    );
-    // Pattern B: currency word AFTER: "150 pesos", "one hundred php"
-    const budgetCurrencyMatch = text.match(
-        /\b([a-z0-9][a-z0-9\s]*?)\s+(?:pesos|php)\b/i
-    );
- 
-    if (budgetKeywordMatch) {
-        const parsed = textToNumber(budgetKeywordMatch[1].trim());
-        if (parsed !== null) budget = parsed;
-    } else if (budgetCurrencyMatch) {
-        const parsed = textToNumber(budgetCurrencyMatch[1].trim());
-        if (parsed !== null) budget = parsed;
-    } else {
-        // Pattern C: bare digit only — digits alone are safe to treat as budget
-        const bareDigit = text.match(/\b(\d+)\b/);
-        if (bareDigit) budget = parseInt(bareDigit[1]);
-    }
- 
-    // ==========================================
-    // STEP 3: Check for "show all" intent
-    // ==========================================
-    const isAllPromos =
-        /\b(all|everything|menu)\b/.test(transcript) &&
-        !budget && !pax;
- 
-    // ==========================================
-    // STEP 4: Extract food item terms
-    //
-    // Strategy:
-    //   a) Remove intent phrases ("i want", "show me", etc.)
-    //   b) Remove budget/pax noise
-    //   c) Split on "and", comma, "&" to get individual item phrases
-    //   d) Strip leftover noise words from each phrase
-    //   e) Drop empty / single-char terms
-    // ==========================================
-    const NOISE_PATTERN = /\b(under|below|less than|above|over|more than|pesos|php|budget of|meals|food|items|promos|deals|offers|good|for|people|pax|person|persons|meal|item|promo|deal|offer)\b/gi;
-    const INTENT_PATTERN = /\b(i want|i need|can i have|please|get me|show me|suggest|find|look for|search for|give me|i'd like|id like|may i have)\b/gi;
- 
-    let foodText = text;
-    foodText = foodText.replace(INTENT_PATTERN, " ");
-    foodText = foodText.replace(NOISE_PATTERN, " ");
-    if (budget) foodText = foodText.replace(new RegExp(`\\b${budget}\\b`, 'g'), " ");
-    foodText = foodText.trim();
- 
-    // Split on natural separators to get individual item phrases
-    const rawTerms = foodText
-        .split(/\band\b|,|&/)
-        .map(t => t.trim().replace(/\s+/g, ' '))
-        .filter(t => t.length > 1);
- 
-    // Further clean each term: remove leftover single noise words
-    const SINGLE_STOP = new Set([
-        'a','an','the','some','of','with','or','also','too','plus','want','need','me','i'
-    ]);
-    const searchTerms = rawTerms
-        .map(t => t.split(' ').filter(w => !SINGLE_STOP.has(w) && w.length > 1).join(' '))
-        .filter(t => t.length > 1);
- 
-    console.log("Search terms:", searchTerms);
- 
-    // ==========================================
-    // STEP 5: Build the API URL
-    // ==========================================
-    let baseUrl, params = [];
- 
-    if (isAllPromos || searchTerms.length === 0) {
-        // No specific items detected → broad search
-        baseUrl = "/promos/search";
-        params.push("q=all");
-    } else {
-        // Specific items detected → item search with individual terms
-        baseUrl = "/promos/items/search";
-        // Send terms as comma-separated list (new backend param)
-        params.push(`terms=${encodeURIComponent(searchTerms.join(","))}`);
-    }
- 
-    if (budget) params.push(`budget=${budget}`);
-    if (budgetType) params.push(`type=${budgetType}`);
-    if (pax) params.push(`pax=${pax}`);
- 
-    const finalUrl = `${baseUrl}?${params.join("&")}`;
-    console.log("Generated URL:", finalUrl);
-    return finalUrl;
-}
-     
- 
+        console.log("Pax:", pax);
+
+        // ==========================================
+        // STEP 2: Extract budget
+        // ==========================================
+        //
+        // Only treat a number as a budget when it has EXPLICIT budget context:
+        //   - A budget keyword before it: "under 150", "below one hundred"
+        //   - A currency word after it: "150 pesos"
+        //   - A bare digit (e.g. "150") — safe since digits rarely appear in menu names
+        //
+        // This prevents "two burgers" from treating "two" as budget=2.
+        // ==========================================
+        let budget = null;
+        let budgetType = null;
+
+        if (/under|below|less than/.test(transcript)) budgetType = "under";
+        else if (/above|over|more than/.test(transcript)) budgetType = "above";
+
+        // Pattern A: budget keyword BEFORE the number: "under 150", "below one fifty"
+        const budgetKeywordMatch = text.match(
+          /\b(?:under|below|less than|above|over|more than|budget of)\s+([a-z0-9][a-z0-9\s]*?)(?:\s*(?:pesos|php)\b|\s*$)/i,
+        );
+        // Pattern B: currency word AFTER: "150 pesos", "one hundred php"
+        const budgetCurrencyMatch = text.match(
+          /\b([a-z0-9][a-z0-9\s]*?)\s+(?:pesos|php)\b/i,
+        );
+
+        if (budgetKeywordMatch) {
+          const parsed = textToNumber(budgetKeywordMatch[1].trim());
+          if (parsed !== null) budget = parsed;
+        } else if (budgetCurrencyMatch) {
+          const parsed = textToNumber(budgetCurrencyMatch[1].trim());
+          if (parsed !== null) budget = parsed;
+        } else {
+          // Pattern C: bare digit only — digits alone are safe to treat as budget
+          const bareDigit = text.match(/\b(\d+)\b/);
+          if (bareDigit) budget = parseInt(bareDigit[1]);
+        }
+
+        // ==========================================
+        // STEP 3: Check for "show all" intent
+        // ==========================================
+        const isAllPromos =
+          /\b(all|everything|menu)\b/.test(transcript) && !budget && !pax;
+
+        // ==========================================
+        // STEP 4: Extract food item terms
+        //
+        // Strategy:
+        //   a) Remove intent phrases ("i want", "show me", etc.)
+        //   b) Remove budget/pax noise
+        //   c) Split on "and", comma, "&" to get individual item phrases
+        //   d) Strip leftover noise words from each phrase
+        //   e) Drop empty / single-char terms
+        // ==========================================
+        const NOISE_PATTERN =
+          /\b(under|below|less than|above|over|more than|pesos|php|budget of|meals|food|items|promos|deals|offers|good|for|people|pax|person|persons|meal|item|promo|deal|offer)\b/gi;
+        const INTENT_PATTERN =
+          /\b(i want|i need|can i have|please|get me|show me|suggest|find|look for|search for|give me|i'd like|id like|may i have)\b/gi;
+
+        let foodText = text;
+        foodText = foodText.replace(INTENT_PATTERN, " ");
+        foodText = foodText.replace(NOISE_PATTERN, " ");
+        if (budget)
+          foodText = foodText.replace(new RegExp(`\\b${budget}\\b`, "g"), " ");
+        foodText = foodText.trim();
+
+        // Split on natural separators to get individual item phrases
+        const rawTerms = foodText
+          .split(/\band\b|,|&/)
+          .map((t) => t.trim().replace(/\s+/g, " "))
+          .filter((t) => t.length > 1);
+
+        // Further clean each term: remove leftover single noise words
+        const SINGLE_STOP = new Set([
+          "a",
+          "an",
+          "the",
+          "some",
+          "of",
+          "with",
+          "or",
+          "also",
+          "too",
+          "plus",
+          "want",
+          "need",
+          "me",
+          "i",
+        ]);
+        const searchTerms = rawTerms
+          .map((t) =>
+            t
+              .split(" ")
+              .filter((w) => !SINGLE_STOP.has(w) && w.length > 1)
+              .join(" "),
+          )
+          .filter((t) => t.length > 1);
+
+        console.log("Search terms:", searchTerms);
+
+        // ==========================================
+        // STEP 5: Build the API URL
+        // ==========================================
+        let baseUrl,
+          params = [];
+
+        if (isAllPromos || searchTerms.length === 0) {
+          // No specific items detected → broad search
+          baseUrl = "/promos/search";
+          params.push("q=all");
+        } else {
+          // Specific items detected → item search with individual terms
+          baseUrl = "/promos/items/search";
+          // Send terms as comma-separated list (new backend param)
+          params.push(`terms=${encodeURIComponent(searchTerms.join(","))}`);
+        }
+
+        if (budget) params.push(`budget=${budget}`);
+        if (budgetType) params.push(`type=${budgetType}`);
+        if (pax) params.push(`pax=${pax}`);
+
+        const finalUrl = `${baseUrl}?${params.join("&")}`;
+        console.log("Generated URL:", finalUrl);
+        return finalUrl;
+      }
+
       function extractBudget(text) {
         const number = text.match(/\d+/);
         const value = number ? number[0] : null;
- 
+
         let type = "exact";
- 
+
         if (
           text.includes("below") ||
           text.includes("under") ||
@@ -349,7 +391,7 @@ function processQuery(transcript) {
         ) {
           type = "lte";
         }
- 
+
         if (
           text.includes("above") ||
           text.includes("over") ||
@@ -357,7 +399,7 @@ function processQuery(transcript) {
         ) {
           type = "gte";
         }
- 
+
         return { value, type };
       }
 
@@ -379,8 +421,15 @@ function processQuery(transcript) {
           setSearchText(`"${transcript}"`);
           updateStatus("", false);
 
-          const url = processQuery(transcript);
-          await fetchAndRender(url);
+          const urls = processQuery(transcript);
+
+          const resultsArrays = await Promise.all(
+            urls.map((url) => fetchPromos(url)),
+          );
+
+          const merged = resultsArrays.flat();
+
+          renderPromos(merged);
         };
 
         recognition.onerror = function (e) {
@@ -435,7 +484,6 @@ function processQuery(transcript) {
     <!-- RED BG WRAPPER -->
     <div class="voice-page-body">
       <div class="voice-card">
-
         <h2>What do you want to eat?</h2>
 
         <!-- Mic button -->
