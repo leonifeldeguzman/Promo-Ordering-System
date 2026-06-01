@@ -186,127 +186,162 @@
       }
 function processQuery(transcript) {
     let text = transcript.toLowerCase().trim();
-
-    // Convert p150, ₱150, php150 into 150
+ 
+    // Normalize currency shorthand: ₱150, php150, p150 → 150
     text = text.replace(/(?:₱|php|p)(\d+)/gi, "$1");
-
+ 
     console.log("Processing:", text);
-
+ 
     // ==========================================
     // INNER UTILITY: Dynamic Text-to-Number Parser
     // ==========================================
     const textToNumber = (inputStr) => {
         const words = {
-            'zero':0, 'one':1, 'two':2, 'three':3, 'four':4, 'five':5, 'six':6, 'seven':7, 'eight':8, 'nine':9, 'ten':10,
-            'eleven':11, 'twelve':12, 'thirteen':13, 'fourteen':14, 'fifteen':15, 'sixteen':16, 'seventeen':17, 'eighteen':18, 'nineteen':19,
-            'twenty':20, 'thirty':30, 'forty':40, 'fifty':50, 'sixty':60, 'seventy':70, 'eighty':80, 'ninety':90
+            'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,'ten':10,
+            'eleven':11,'twelve':12,'thirteen':13,'fourteen':14,'fifteen':15,'sixteen':16,'seventeen':17,'eighteen':18,'nineteen':19,
+            'twenty':20,'thirty':30,'forty':40,'fifty':50,'sixty':60,'seventy':70,'eighty':80,'ninety':90
         };
-        const scales = { 'hundred':100, 'thousand':1000, 'million':1000000, 'billion':1000000000 };
-
-        const tokens = inputStr.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/);
-        let currentResult = 0;
-        let finalResult = 0;
-        let hasNumber = false;
-
+        const scales = { 'hundred':100,'thousand':1000,'million':1000000,'billion':1000000000 };
+        const tokens = inputStr.toLowerCase().replace(/[^a-z0-9\s]/g,'').split(/\s+/);
+        let currentResult = 0, finalResult = 0, hasNumber = false;
         for (let word of tokens) {
-            if (words[word] !== undefined) {
-                currentResult += words[word];
-                hasNumber = true;
-            } else if (scales[word] !== undefined) {
+            if (words[word] !== undefined) { currentResult += words[word]; hasNumber = true; }
+            else if (scales[word] !== undefined) {
                 currentResult *= scales[word];
-                if (word !== 'hundred') {
-                    finalResult += currentResult;
-                    currentResult = 0;
-                }
+                if (word !== 'hundred') { finalResult += currentResult; currentResult = 0; }
                 hasNumber = true;
-            } else if (!isNaN(word) && word !== "") {
-                currentResult += parseInt(word);
-                hasNumber = true;
-            }
+            } else if (!isNaN(word) && word !== "") { currentResult += parseInt(word); hasNumber = true; }
         }
         finalResult += currentResult;
         return hasNumber ? finalResult : null;
     };
-
+ 
     // ==========================================
-    // DYNAMIC PARSING LOGIC
+    // STEP 1: Extract pax
     // ==========================================
-
-    // 1 & 2. Extract pax count using phrase-context rules
     let pax = null;
     const paxMatch = text.match(/(?:for|feed|good for|pax|people|persons?)\s+([a-z0-9\s]+?)(?:$|\s+(?:under|below|above|over|pesos|php|p\d))/i);
-    
     if (paxMatch) {
         const parsedPax = textToNumber(paxMatch[1]);
         if (parsedPax !== null) {
             pax = parsedPax;
-            text = text.replace(paxMatch[0], ""); // Strip out the text so it won't break budget reading
+            text = text.replace(paxMatch[0], "").trim();
         }
     }
-
     console.log("Pax:", pax);
-    
-    // 3. Extract budget from remaining text dynamically
+ 
+    // ==========================================
+    // STEP 2: Extract budget
+    // ==========================================
+    //
+    // Only treat a number as a budget when it has EXPLICIT budget context:
+    //   - A budget keyword before it: "under 150", "below one hundred"
+    //   - A currency word after it: "150 pesos"
+    //   - A bare digit (e.g. "150") — safe since digits rarely appear in menu names
+    //
+    // This prevents "two burgers" from treating "two" as budget=2.
+    // ==========================================
     let budget = null;
-    const budgetMatch = text.match(/(?:under|below|less than|above|over|more than|budget of)?\s*([a-z0-9\s]+?)(?:\s*(?:pesos|php|p)\b|$)/i);
-    if (budgetMatch) {
-        const parsedBudget = textToNumber(budgetMatch[1]);
-        if (parsedBudget !== null) budget = parsedBudget;
-    }
-    
-    // Determine budget type
     let budgetType = null;
-    if (transcript.includes("under") || transcript.includes("below") || transcript.includes("less than")) {
-        budgetType = "under";
-    } else if (transcript.includes("above") || transcript.includes("over") || transcript.includes("more than")) {
-        budgetType = "above";
-    }
-    
-    // Check for "all promos" intent
-    const isAllPromos = 
-        transcript.includes("all") ||
-        transcript.includes("everything") ||
-        transcript.includes("menu");
-    
-    // Clean up specific food item keywords
-    let possibleFoodItem = text;
-    possibleFoodItem = possibleFoodItem.replace(/under|below|less than|above|over|more than|pesos|p|php/gi, "");
-    if (budget) possibleFoodItem = possibleFoodItem.replace(budget.toString(), "");
-    possibleFoodItem = possibleFoodItem.replace(/meals|food|items|promos|deals|offers|good|for|people|pax|person|meal|item/gi, "");
-    possibleFoodItem = possibleFoodItem.replace(/i\s+want|i\s+need|can\s+i\s+have|please|get\s+me|show\s+me|suggest|find|look\s+for|search\s+for|give\s+me/gi, "");
-    possibleFoodItem = possibleFoodItem.trim();
-    
-    console.log("Extracted specific item:", possibleFoodItem);
-    
-    // 4. Construct API URL
-    let baseUrl = "/promos/search";
-    if (possibleFoodItem.length > 0 && !isAllPromos) {
-        baseUrl = "/promos/items/search";
-    }
-
-    let params = [];
-    if (possibleFoodItem.length > 0 && !isAllPromos) {
-        params.push(`q=${encodeURIComponent(possibleFoodItem)}`);
+ 
+    if (/under|below|less than/.test(transcript)) budgetType = "under";
+    else if (/above|over|more than/.test(transcript)) budgetType = "above";
+ 
+    // Pattern A: budget keyword BEFORE the number: "under 150", "below one fifty"
+    const budgetKeywordMatch = text.match(
+        /\b(?:under|below|less than|above|over|more than|budget of)\s+([a-z0-9][a-z0-9\s]*?)(?:\s*(?:pesos|php)\b|\s*$)/i
+    );
+    // Pattern B: currency word AFTER: "150 pesos", "one hundred php"
+    const budgetCurrencyMatch = text.match(
+        /\b([a-z0-9][a-z0-9\s]*?)\s+(?:pesos|php)\b/i
+    );
+ 
+    if (budgetKeywordMatch) {
+        const parsed = textToNumber(budgetKeywordMatch[1].trim());
+        if (parsed !== null) budget = parsed;
+    } else if (budgetCurrencyMatch) {
+        const parsed = textToNumber(budgetCurrencyMatch[1].trim());
+        if (parsed !== null) budget = parsed;
     } else {
-        params.push("q=all");
+        // Pattern C: bare digit only — digits alone are safe to treat as budget
+        const bareDigit = text.match(/\b(\d+)\b/);
+        if (bareDigit) budget = parseInt(bareDigit[1]);
     }
-
+ 
+    // ==========================================
+    // STEP 3: Check for "show all" intent
+    // ==========================================
+    const isAllPromos =
+        /\b(all|everything|menu)\b/.test(transcript) &&
+        !budget && !pax;
+ 
+    // ==========================================
+    // STEP 4: Extract food item terms
+    //
+    // Strategy:
+    //   a) Remove intent phrases ("i want", "show me", etc.)
+    //   b) Remove budget/pax noise
+    //   c) Split on "and", comma, "&" to get individual item phrases
+    //   d) Strip leftover noise words from each phrase
+    //   e) Drop empty / single-char terms
+    // ==========================================
+    const NOISE_PATTERN = /\b(under|below|less than|above|over|more than|pesos|php|budget of|meals|food|items|promos|deals|offers|good|for|people|pax|person|persons|meal|item|promo|deal|offer)\b/gi;
+    const INTENT_PATTERN = /\b(i want|i need|can i have|please|get me|show me|suggest|find|look for|search for|give me|i'd like|id like|may i have)\b/gi;
+ 
+    let foodText = text;
+    foodText = foodText.replace(INTENT_PATTERN, " ");
+    foodText = foodText.replace(NOISE_PATTERN, " ");
+    if (budget) foodText = foodText.replace(new RegExp(`\\b${budget}\\b`, 'g'), " ");
+    foodText = foodText.trim();
+ 
+    // Split on natural separators to get individual item phrases
+    const rawTerms = foodText
+        .split(/\band\b|,|&/)
+        .map(t => t.trim().replace(/\s+/g, ' '))
+        .filter(t => t.length > 1);
+ 
+    // Further clean each term: remove leftover single noise words
+    const SINGLE_STOP = new Set([
+        'a','an','the','some','of','with','or','also','too','plus','want','need','me','i'
+    ]);
+    const searchTerms = rawTerms
+        .map(t => t.split(' ').filter(w => !SINGLE_STOP.has(w) && w.length > 1).join(' '))
+        .filter(t => t.length > 1);
+ 
+    console.log("Search terms:", searchTerms);
+ 
+    // ==========================================
+    // STEP 5: Build the API URL
+    // ==========================================
+    let baseUrl, params = [];
+ 
+    if (isAllPromos || searchTerms.length === 0) {
+        // No specific items detected → broad search
+        baseUrl = "/promos/search";
+        params.push("q=all");
+    } else {
+        // Specific items detected → item search with individual terms
+        baseUrl = "/promos/items/search";
+        // Send terms as comma-separated list (new backend param)
+        params.push(`terms=${encodeURIComponent(searchTerms.join(","))}`);
+    }
+ 
     if (budget) params.push(`budget=${budget}`);
     if (budgetType) params.push(`type=${budgetType}`);
     if (pax) params.push(`pax=${pax}`);
-
+ 
     const finalUrl = `${baseUrl}?${params.join("&")}`;
     console.log("Generated URL:", finalUrl);
     return finalUrl;
 }
      
-
+ 
       function extractBudget(text) {
         const number = text.match(/\d+/);
         const value = number ? number[0] : null;
-
+ 
         let type = "exact";
-
+ 
         if (
           text.includes("below") ||
           text.includes("under") ||
@@ -314,7 +349,7 @@ function processQuery(transcript) {
         ) {
           type = "lte";
         }
-
+ 
         if (
           text.includes("above") ||
           text.includes("over") ||
@@ -322,7 +357,7 @@ function processQuery(transcript) {
         ) {
           type = "gte";
         }
-
+ 
         return { value, type };
       }
 

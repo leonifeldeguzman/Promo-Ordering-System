@@ -38,6 +38,7 @@ def add_promo():
             file.save(os.path.join(UPLOAD_FOLDER, filename))
             
             # Save 'filename' (just the string "burger.jpg") to your database
+            
 
 
 @promo_routes.route('/promos')
@@ -374,61 +375,143 @@ def search_promos():
 
 @promo_routes.route("/promos/items/search")
 def search_by_items():
+    raw_terms = request.args.get("terms", "").strip()
     query = request.args.get("q", "").lower().strip()
+
     budget = request.args.get("budget", type=int)
     budget_type = request.args.get("type", "exact")
     pax = request.args.get("pax", type=int)
-    
-    print(f"Items search - Query: '{query}', Budget: {budget}, Type: {budget_type}, Pax: {pax}")
-    
+
+    STOP_WORDS = {
+        "and", "or", "the", "a", "an", "with", "want", "need", "some",
+        "me", "i", "please", "can", "have", "get", "show", "find",
+        "good", "for", "people", "pax", "person", "persons",
+        "all", "meals", "meal", "food", "item", "items", "promo",
+        "promos", "deal", "deals", "offer", "offers", "under", "below",
+        "above", "over", "less", "than", "more", "pesos", "php", "p",
+    }
+
+    BUDGET_WORDS = {
+        "above", "below", "under", "over", "worth", "budget",
+        "less", "than", "more", "pesos", "php", "p"
+    }
+
+    def clean_terms(raw: str) -> list[str]:
+        parts = [t.strip().lower() for t in raw.split(",") if t.strip()]
+        cleaned = []
+        for part in parts:
+            if part not in STOP_WORDS and len(part) > 1:
+                cleaned.append(part)
+        return cleaned
+
+    def terms_from_query(q: str) -> list[str]:
+        chunks = re.split(r'\band\b|,|&', q)
+        result = []
+        for chunk in chunks:
+            chunk = chunk.strip()
+            words = [
+                w for w in chunk.split()
+                if w not in STOP_WORDS
+                and w not in BUDGET_WORDS
+                and not w.isdigit()
+                and len(w) > 1
+            ]
+            if words:
+                result.append(" ".join(words))
+        return result
+
+    if raw_terms:
+        search_terms = clean_terms(raw_terms)
+    elif query and query not in ["good", "for", "people", "all", "meals", "meal"]:
+        search_terms = terms_from_query(query)
+    else:
+        search_terms = []
+
+    # ── If multiple items are being searched, budget only applies to the FIRST term ──
+    is_multi_item = len(search_terms) > 1
+
+    print(f"Items search - Terms: {search_terms}, Budget: {budget}, Type: {budget_type}, Pax: {pax}, Multi: {is_multi_item}")
+
     conn = db_connection()
     cursor = conn.cursor()
-    
-    params = []
-    
-    # If query is completely empty or contains leftover fluff adjectives, treat it as a broad item query
-    if not query or query in ["good", "for", "people", "all", "meals", "meal"]:
+
+    if not search_terms:
         sql = "SELECT * FROM promos WHERE 1=1"
+        params = []
+
+        if budget is not None:
+            sql += " AND price >= %s" if budget_type == "above" else " AND price <= %s"
+            params.append(budget)
+
+        if pax:
+            sql += " AND serving_size = %s"
+            params.append(pax)
+
+    elif is_multi_item:
+        # ── Multi-item: budget applies ONLY to the first term, rest are unfiltered ──
+        all_rows = []
+        seen_ids = set()
+
+        for i, term in enumerate(search_terms):
+            pattern = f"%{term}%"
+            term_sql = (
+                "SELECT * FROM promos WHERE ("
+                "LOWER(COALESCE(name,'')) LIKE %s "
+                "OR LOWER(COALESCE(category,'')) LIKE %s "
+                "OR LOWER(COALESCE(description,'')) LIKE %s)"
+            )
+            term_params = [pattern, pattern, pattern]
+
+            # Only apply budget to the first term (where the budget was mentioned)
+            if i == 0 and budget is not None:
+                term_sql += " AND price >= %s" if budget_type == "above" else " AND price <= %s"
+                term_params.append(budget)
+
+            if pax:
+                term_sql += " AND serving_size = %s"
+                term_params.append(pax)
+
+            cursor.execute(term_sql, tuple(term_params))
+            rows = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+
+            for row in rows:
+                row_dict = dict(zip(columns, row))
+                if row_dict["id"] not in seen_ids:
+                    seen_ids.add(row_dict["id"])
+                    all_rows.append(row_dict)
+
+        cursor.close()
+        conn.close()
+        return jsonify(all_rows)
+
     else:
-        words = query.split()
-        conditions = []
-        
-        for word in words:
-            if len(word) > 1:
-                conditions.append("(LOWER(name) LIKE %s OR LOWER(category) LIKE %s)")
-                search_pattern = f"%{word}%"
-                params.extend([search_pattern, search_pattern])
-        
-        if conditions:
-            # 💡 CHANGED FROM 'OR' JOIN INSIDE AN 'AND' TO ALLOW FLEXIBLE MATCHES
-            sql = f"SELECT * FROM promos WHERE ({' OR '.join(conditions)})"
-        else:
-            sql = "SELECT * FROM promos WHERE LOWER(name) LIKE %s"
-            params.append(f"%{query}%")
-    
-    # Add budget filter if provided
-    if budget is not None:
-        if budget_type == "above":
-            sql += " AND price >= %s"
-        else:
-            sql += " AND price <= %s"
-        params.append(budget)
-    
-    # Add Pax / Serving Size Filter
-    if pax:
-        sql += " AND serving_size = %s"
-        params.append(pax)
-    
+        # ── Single term: apply budget normally ──
+        pattern = f"%{search_terms[0]}%"
+        sql = (
+            "SELECT * FROM promos WHERE ("
+            "LOWER(COALESCE(name,'')) LIKE %s "
+            "OR LOWER(COALESCE(category,'')) LIKE %s "
+            "OR LOWER(COALESCE(description,'')) LIKE %s)"
+        )
+        params = [pattern, pattern, pattern]
+
+        if budget is not None:
+            sql += " AND price >= %s" if budget_type == "above" else " AND price <= %s"
+            params.append(budget)
+
+        if pax:
+            sql += " AND serving_size = %s"
+            params.append(pax)
+
     print(f"SQL: {sql}")
     print(f"Params: {params}")
-    
+
     cursor.execute(sql, tuple(params))
     rows = cursor.fetchall()
-    
     columns = [desc[0] for desc in cursor.description]
     promos = [dict(zip(columns, row)) for row in rows]
-    
+
     cursor.close()
     conn.close()
-    
     return jsonify(promos)
