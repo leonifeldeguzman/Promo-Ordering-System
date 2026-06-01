@@ -333,14 +333,25 @@ def search_promos():
         
         params = []
         
-        # Define phrases or structural components that represent structural filtering instead of food items
-        FILTER_WORDS = ["under", "below", "above", "over", "pax", "people", "person", "meals", "meal", "food", "items", "promos", "p", "php", "pesos"]
+        # 1. Strip out pure numeric matching strings and budget/pax indicators
+        # This keeps keywords like 'desserts', 'burgers', 'drinks' clean
+        clean_query = query
+        if budget:
+            clean_query = clean_query.replace(str(budget), "")
+        if pax:
+            clean_query = clean_query.replace(str(pax), "")
+            
+        FILTER_WORDS = [
+            "under", "below", "above", "over", "pax", "people", "person", 
+            "meals", "meal", "food", "items", "promos", "p", "php", "pesos", "for"
+        ]
         
-        # Clean query words to see if an actual target food item exists
-        query_words = [w for w in query.split() if w not in FILTER_WORDS and not w.isdigit()]
+        # Extract remaining meaningful keywords (e.g., ["desserts"])
+        query_words = [w for w in clean_query.split() if w not in FILTER_WORDS]
+        cleaned_search_keyword = " ".join(query_words).strip()
 
-        # If no target keyword remains, treat it as an open search across all items matching the budget/pax constraints
-        if not query or not query_words or query in ["all", "all promos", "all items", "show all", "everything", "promos", "items", "menu", "good"]:
+        # 2. Check if there is a remaining search term to look for
+        if not query or not cleaned_search_keyword or query in ["all", "all promos", "all items", "show all", "everything", "promos", "items", "menu", "good"]:
             sql = "SELECT * FROM promos WHERE 1=1"
         else:
             sql = """
@@ -351,7 +362,8 @@ def search_promos():
                 OR COALESCE(LOWER(description), '') LIKE %s
             )
             """
-            params.extend([f"%{query}%", f"%{query}%", f"%{query}%"])
+            # Inject the cleanly isolated structural target keyword
+            params.extend([f"%{cleaned_search_keyword}%", f"%{cleaned_search_keyword}%", f"%{cleaned_search_keyword}%"])
             
         # Apply budget filter if provided
         if budget:
