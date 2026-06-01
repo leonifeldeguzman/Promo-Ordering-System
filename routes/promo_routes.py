@@ -333,7 +333,14 @@ def search_promos():
         
         params = []
         
-        if not query or query in ["all", "all promos", "all items", "show all", "everything", "promos", "items", "menu", "good"]:
+        # Define phrases or structural components that represent structural filtering instead of food items
+        FILTER_WORDS = ["under", "below", "above", "over", "pax", "people", "person", "meals", "meal", "food", "items", "promos", "p", "php", "pesos"]
+        
+        # Clean query words to see if an actual target food item exists
+        query_words = [w for w in query.split() if w not in FILTER_WORDS and not w.isdigit()]
+
+        # If no target keyword remains, treat it as an open search across all items matching the budget/pax constraints
+        if not query or not query_words or query in ["all", "all promos", "all items", "show all", "everything", "promos", "items", "menu", "good"]:
             sql = "SELECT * FROM promos WHERE 1=1"
         else:
             sql = """
@@ -350,8 +357,10 @@ def search_promos():
         if budget:
             if budget_type == "above":
                 sql += " AND price >= %s"
-            else:
+            elif budget_type == "below":
                 sql += " AND price <= %s"
+            else:
+                sql += " AND price = %s"
             params.append(budget)
             
         # Apply Pax / Serving Size Filter cleanly as integer match
@@ -427,7 +436,6 @@ def search_by_items():
     else:
         search_terms = []
 
-    # ── If multiple items are being searched, budget only applies to the FIRST term ──
     is_multi_item = len(search_terms) > 1
 
     print(f"Items search - Terms: {search_terms}, Budget: {budget}, Type: {budget_type}, Pax: {pax}, Multi: {is_multi_item}")
@@ -439,8 +447,14 @@ def search_by_items():
         sql = "SELECT * FROM promos WHERE 1=1"
         params = []
 
+        # ── FIX 1: Explicitly handle exact/above/below when no search terms are present ──
         if budget is not None:
-            sql += " AND price >= %s" if budget_type == "above" else " AND price <= %s"
+            if budget_type == "above":
+                sql += " AND price >= %s"
+            elif budget_type == "below":
+                sql += " AND price <= %s"
+            else:
+                sql += " AND price = %s"
             params.append(budget)
 
         if pax:
@@ -448,7 +462,6 @@ def search_by_items():
             params.append(pax)
 
     elif is_multi_item:
-        # ── Multi-item: budget applies ONLY to the first term, rest are unfiltered ──
         all_rows = []
         seen_ids = set()
 
@@ -462,9 +475,14 @@ def search_by_items():
             )
             term_params = [pattern, pattern, pattern]
 
-            # Only apply budget to the first term (where the budget was mentioned)
+            # ── FIX 2: Explicitly handle exact/above/below for multi-item arrays ──
             if i == 0 and budget is not None:
-                term_sql += " AND price >= %s" if budget_type == "above" else " AND price <= %s"
+                if budget_type == "above":
+                    term_sql += " AND price >= %s"
+                elif budget_type == "below":
+                    term_sql += " AND price <= %s"
+                else:
+                    term_sql += " AND price = %s"
                 term_params.append(budget)
 
             if pax:
@@ -496,8 +514,14 @@ def search_by_items():
         )
         params = [pattern, pattern, pattern]
 
-        if budget is not None:
-            sql += " AND price >= %s" if budget_type == "above" else " AND price <= %s"
+        # ── Already fixed here previously, preserved for stability ──
+        if budget:
+            if budget_type == "above":
+                sql += " AND price >= %s"
+            elif budget_type == "below":
+                sql += " AND price <= %s"
+            else:
+                sql += " AND price = %s"
             params.append(budget)
 
         if pax:
