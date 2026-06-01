@@ -3,13 +3,18 @@ import json
 from flask import Blueprint, request, jsonify
 from google import genai
 
-# Create blueprint
+# 1. Grab the API key from Railway's environment variables
+api_key = os.environ.get("GEMINI_API_KEY")
+
+# 2. Initialize your client ONCE seamlessly
+client = genai.Client(api_key=api_key)
+
+# 3. Create your blueprint route handler
 ai_bp = Blueprint('ai', __name__, url_prefix='/api/ai')
 
-# Configure Gemini
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
+# Your model tracking variable
 MODEL_NAME = "gemini-2.5-flash-lite"
+
 
 def get_menu_from_db():
     """Fetch current menu items from your PostgreSQL including images"""
