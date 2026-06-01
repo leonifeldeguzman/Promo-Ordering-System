@@ -23,7 +23,6 @@ def get_menu_from_db():
     conn = db_connection()
     cur = conn.cursor()
     
-    # ── ADDED image_url TO THE SELECT STATEMENT ──
     cur.execute("""
         SELECT name, price, category, promo_details, image_url 
         FROM promos 
@@ -37,9 +36,9 @@ def get_menu_from_db():
     if not items:
         return "No menu items found. Please add items in admin panel."
     
-    # Structure data so Gemini knows which image filename maps to which item
+    
     menu_text = "\n".join([
-        f"- {item[0]}: ₱{item[1]} ({item[2]}) - Promo: {item[3] or 'None'} - Image: {item[4] or 'none'}" 
+        f"- {item[0]}: ₱{float(item[1])} ({item[2]}) - Promo: {item[3] or 'None'} - Image: {item[4] or 'none'}" 
         for item in items
     ])
     return menu_text
