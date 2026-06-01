@@ -46,6 +46,7 @@ def get_all_promos():
     query = """
         SELECT id, name, category, price, description, promo_details, status, image_url, serving_size
         FROM promos
+        ORDER BY id DESC
     """
 
     cursor.execute(query)
