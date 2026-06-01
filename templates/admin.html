@@ -248,7 +248,7 @@
                   </td>
                   <td id="promo{{ item[0] }}">{{ item[5] }}</td>
 
-                  <!-- ACTIONS COLUMN (PUT THIS BACK) -->
+                  <!-- ACTIONS COLUMN  -->
                   <td>
                     <div class="actions-cell">
                       <button
@@ -690,6 +690,7 @@
           nameCell.contentEditable = "true";
           priceCell.contentEditable = "true";
           promoCell.contentEditable = "true";
+          servingSizeCell.contentEditable = "true";
 
           // =========================
           // CATEGORY → dropdown
@@ -799,9 +800,25 @@
           statusCell.querySelector(".status-pill")?.innerText.trim() ||
           statusCell.innerText.trim();
 
+                function toTitleCase(str) {
+            if (!str) return '';
+            return str.trim().replace(/\w\S*/g, function(txt) {
+                return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+            });
+        }
+
+        // 2. Clean your category variable right before creating the payload
+        const cleanCategory = toTitleCase(category);
+
+        // 3. Update the display element on your screen so the "ick" disappears instantly
+        const categoryElement = document.getElementById(`category${id}`);
+        if (categoryElement) {
+            categoryElement.innerText = cleanCategory;
+        }
+
         const data = {
           name: document.getElementById(`name${id}`).innerText.trim(),
-          category: category,
+          category: cleanCategory,
           serving_size: document.getElementById(`serving_size${id}`).innerText.trim(),
           price: document
             .getElementById(`price${id}`)

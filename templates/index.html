@@ -136,11 +136,11 @@
 
                     <div class="results-footer">
 
-                        <button class="retry-btn">
+                        <button class="retry-btn" onclick="location.reload()">
                             Try Again
                         </button>
 
-                        <button class="view-btn">
+                        <button class="view-btn" onclick="window.location.href='/promos-page'">
                             View All Promos
                         </button>
 
@@ -186,6 +186,10 @@
       }
 function processQuery(transcript) {
     let text = transcript.toLowerCase().trim();
+
+    // Convert p150, ₱150, php150 into 150
+    text = text.replace(/(?:₱|php|p)(\d+)/gi, "$1");
+
     console.log("Processing:", text);
 
     // ==========================================
@@ -441,8 +445,8 @@ function processQuery(transcript) {
             <button class="pill-btn" onclick="setPill('Chicken Promo')">
               "Chicken Promo"
             </button>
-            <button class="pill-btn" onclick="setPill('Birthday Packages')">
-              "Birthday Packages"
+            <button class="pill-btn" onclick="setPill('Good for 4 people')">
+              "Good for 4 people"
             </button>
           </div>
         </div>
