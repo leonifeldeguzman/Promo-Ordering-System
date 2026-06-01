@@ -449,11 +449,19 @@
         recognition.start();
       }
 
-      function handleSearchSubmit() {
+      async function handleSearchSubmit() {
         const text = document.getElementById("searchInput").value.trim();
         if (!text) return;
-        const url = processQuery(text);
-        fetchAndRender(url);
+
+        const urls = processQuery(text);
+
+        const resultsArrays = await Promise.all(
+          urls.map((url) => fetchPromos(url)),
+        );
+
+        const merged = resultsArrays.flat();
+
+        renderPromos(merged);
       }
 
       function setPill(text) {
