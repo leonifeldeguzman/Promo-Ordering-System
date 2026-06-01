@@ -323,10 +323,16 @@
         const form = document.getElementById("adminForm");
 
         form.addEventListener("submit", function (e) {
-          const name = document.getElementById("item_name").value.trim();
+          const nameInput = document.getElementById("item_name");
           const price = document.getElementById("price").value.trim();
 
-          if (!name || !price) {
+          // Capitalize before submit
+          nameInput.value = nameInput.value
+            .trim()
+            .toLowerCase()
+            .replace(/\b\w/g, (c) => c.toUpperCase());
+
+          if (!nameInput.value || !price) {
             e.preventDefault();
             alert("Menu Name and Price are required.");
           }
