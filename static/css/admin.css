@@ -34,7 +34,14 @@ aside {
   display: flex;
   flex-direction: column;
   border-right: 1px solid #EDF2F7;
-  height: 100vh; /* IMPORTANT */
+
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  height: 100vh;
+  overflow-y: auto;
+
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.03);
 }
 
@@ -232,6 +239,7 @@ aside {
 }
     /* 2. MAIN CONTENT AREA */
     main {
+      margin-left: 260px;
       flex-grow: 1;
       padding: 40px;
       display: flex;
@@ -778,7 +786,7 @@ td[contenteditable="true"]:focus {
     @media (max-width: 768px) {
       body { flex-direction: column; }
       aside { display: none; }
-      main { padding: 20px; }
+      main { padding: 20px; margin-left: 0 !important;}
       .form-grid-3, .form-grid-2 { grid-template-columns: 1fr; gap: 16px; }
       .upload-zone { flex-direction: column; text-align: center; gap: 16px; }
       .upload-left { flex-direction: column; }
