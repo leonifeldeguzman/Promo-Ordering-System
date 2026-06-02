@@ -158,7 +158,7 @@ DB_PASSWORD=your_password
 DB_NAME=speaknsave
 
 # Optional AI Integration
-GROQ_API_KEY=your_api_key
+GEMINI_API_KEY=your_api_key
 ```
 
 **Important:** Never commit your `.env` file to GitHub.
@@ -174,31 +174,57 @@ Users can search using text or voice commands.
 #### Search by Category
 
 ```text
-Show me burgers
+Burgers and drinks
 ```
 
 #### Search by Budget
 
 ```text
-Find meals under 100 pesos
+Meals under 100 pesos
 ```
 
-#### Search by Serving Size
+#### Search by Multiple Categories
 
 ```text
-Show food for 3 people
+Platter and desserts
 ```
 
 #### Search Promos
 
 ```text
-Show available promos
+All promos
+```
+
+#### Search by Category and Budget
+
+```text
+Desserts under 99 pesos
 ```
 
 #### Combined Search
 
 ```text
-Find desserts under 99 pesos
+Drinks under 50 and burgers above 100
+```
+
+#### Advanced Search
+
+```text
+Platter under 300 and desserts under 99
+```
+
+#### Multi-Category Search
+
+```text
+Rice meals and chicken under 200
+```
+
+#### Mixed Budget Search
+
+```text
+Burgers under 100 and drinks under 50
+```
+
 ```
 
 ---
