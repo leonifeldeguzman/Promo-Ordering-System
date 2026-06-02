@@ -207,13 +207,13 @@ Find desserts under 99 pesos
 
 ### Customer Commands
 
-| Voice Command                | Action                    |
-| ---------------------------- | ------------------------- |
-| "Show burgers"               | Display burger menu items |
-| "Find meals under 100 pesos" | Budget filtering          |
-| "Show desserts"              | Category filtering        |
-| "Show promos"                | Promo search              |
-| "Food for 4 people"          | Serving size filtering    |
+| Voice Command | Action |
+|--------------|---------|
+| "Burgers under 100" | Show burger menu items within a ₱100 budget |
+| "Meals under 150 pesos" | Filter meals by budget |
+| "Desserts and burgers under 100" | Filter multiple categories within a budget |
+| "I want drinks and platters" | Show items from multiple categories |
+| "Drinks under 50" | Show drinks within a ₱50 budget |
 
 ### Admin Commands
 
