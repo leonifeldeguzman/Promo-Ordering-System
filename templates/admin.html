@@ -60,9 +60,9 @@
 
     <main>
       <header class="header">
-      <button id="sidebarToggle" class="sidebar-toggle-btn">
-        <i class="fa fa-bars"></i>
-      </button>
+        <button id="sidebarToggle" class="sidebar-toggle-btn">
+          <i class="fa fa-bars"></i>
+        </button>
         <h2>Menu Inventory</h2>
         <div class="header-actions">
           <div class="user-avatar">
@@ -138,11 +138,15 @@
                   <i class="fa-solid fa-chevron-down chevron"></i>
                 </div>
               </div>
-               <div class="form-group">
-              <label>Serving Size (Pax)</label>
-              <input type="number" id="serving_size" name="serving_size" placeholder="e.g. 1, 2, 3" />
-            </div>
-
+              <div class="form-group">
+                <label>Serving Size (Pax)</label>
+                <input
+                  type="number"
+                  id="serving_size"
+                  name="serving_size"
+                  placeholder="e.g. 1, 2, 3"
+                />
+              </div>
 
               <div class="form-group">
                 <label>Promo Details</label>
@@ -204,7 +208,9 @@
             <div id="imagePreview" class="preview-container"></div>
 
             <div class="form-actions">
-              <button type="button" class="btn-cancel">Cancel</button>
+              <button type="button" id="clearFormBtn" class="btn-cancel">
+                Cancel
+              </button>
               <button type="submit" class="btn-save">Save Item</button>
             </div>
           </form>
@@ -320,6 +326,14 @@
         // FORM VALIDATION ONLY (NO BLOCKING SUBMIT)
         // =========================
         const form = document.getElementById("adminForm");
+        
+        document
+          .getElementById("clearFormBtn")
+          .addEventListener("click", () => {
+            document.getElementById("adminForm").reset();
+            document.getElementById("imagePreview").innerHTML = "";
+            document.getElementById("image").value = "";
+          });
 
         form.addEventListener("submit", function (e) {
           const nameInput = document.getElementById("item_name");
@@ -337,6 +351,19 @@
           }
         });
 
+        document.addEventListener("DOMContentLoaded", () => {
+          const cancelBtn = document.querySelector(".btn-cancel");
+
+          cancelBtn.addEventListener("click", () => {
+            document.getElementById("adminForm").reset();
+
+            // Clear image preview
+            document.getElementById("imagePreview").innerHTML = "";
+
+            // Clear file input
+            document.getElementById("image").value = "";
+          });
+        });
         // =========================
         // VOICE SYSTEM (SAFE - NO AUTO SUBMIT)
         // =========================
@@ -435,7 +462,10 @@
           const category = text.match(/category\s+(.+?)(?=promo|status|$)/);
           const promo = text.match(/promo\s+(.+?)(?=status|$)/);
           const status = text.match(/status\s+(active|sold out|phased out)/);
-          const servingSize = text.match(/serving size\s+(\d+)/i) || text.match(/serves\s+(\d+)/i) || text.match(/for\s+(\d+)\s+pax/i);
+          const servingSize =
+            text.match(/serving size\s+(\d+)/i) ||
+            text.match(/serves\s+(\d+)/i) ||
+            text.match(/for\s+(\d+)\s+pax/i);
           let item = "";
 
           // =========================
@@ -478,8 +508,6 @@
             document.getElementById("serving_size").value = servingSize[1];
             speak(`Serving size set to ${servingSize[1]} pax`);
           }
-
-          
 
           // =========================
           // PROMO
@@ -701,7 +729,7 @@
           // CATEGORY → dropdown
           // =========================
           const currentCategory = categoryCell.innerText.trim();
-          const normCat = currentCategory.toLowerCase().replace(/\s+/g, '');
+          const normCat = currentCategory.toLowerCase().replace(/\s+/g, "");
           categoryCell.innerHTML = `
   <div class="select-container edit-select-container">
     <select id="edit_category${id}" class="edit-select category-edit">
@@ -791,11 +819,12 @@
         const categoryCell = document.getElementById(`category${id}`);
         const servingSizeCell = document.getElementById(`serving_size${id}`);
         const categorySelect = document.getElementById(`edit_category${id}`);
-        const category = categorySelect ? categorySelect.value.trim().toLowerCase() : categoryCell.innerText.trim().toLowerCase();
+        const category = categorySelect
+          ? categorySelect.value.trim().toLowerCase()
+          : categoryCell.innerText.trim().toLowerCase();
         // =========================
         // CATEGORY (supports both text + dropdown)
         // =========================
-        
 
         // =========================
         // STATUS (supports both pill + dropdown)
@@ -805,11 +834,11 @@
           statusCell.querySelector(".status-pill")?.innerText.trim() ||
           statusCell.innerText.trim();
 
-                function toTitleCase(str) {
-            if (!str) return '';
-            return str.trim().replace(/\w\S*/g, function(txt) {
-                return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-            });
+        function toTitleCase(str) {
+          if (!str) return "";
+          return str.trim().replace(/\w\S*/g, function (txt) {
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+          });
         }
 
         // 2. Clean your category variable right before creating the payload
@@ -818,13 +847,15 @@
         // 3. Update the display element on your screen so the "ick" disappears instantly
         const categoryElement = document.getElementById(`category${id}`);
         if (categoryElement) {
-            categoryElement.innerText = cleanCategory;
+          categoryElement.innerText = cleanCategory;
         }
 
         const data = {
           name: document.getElementById(`name${id}`).innerText.trim(),
           category: cleanCategory,
-          serving_size: document.getElementById(`serving_size${id}`).innerText.trim(),
+          serving_size: document
+            .getElementById(`serving_size${id}`)
+            .innerText.trim(),
           price: document
             .getElementById(`price${id}`)
             .innerText.replace("₱", "")
@@ -860,28 +891,29 @@
       `;
 
             // OPTIONAL: restore category display as plain text
-            categoryCell.innerText = category.charAt(0).toUpperCase() + category.slice(1);
+            categoryCell.innerText =
+              category.charAt(0).toUpperCase() + category.slice(1);
           });
       }
 
       document.addEventListener("DOMContentLoaded", function () {
-    const toggleBtn = document.getElementById("sidebarToggle");
-    const sidebar = document.querySelector(".sidebar"); // 💡 Target explicitly by your desktop class name
+        const toggleBtn = document.getElementById("sidebarToggle");
+        const sidebar = document.querySelector(".sidebar"); // 💡 Target explicitly by your desktop class name
 
-    if (toggleBtn && sidebar) {
-      toggleBtn.addEventListener("click", function (e) {
-        sidebar.classList.toggle("active");
-        e.stopPropagation(); 
-      });
+        if (toggleBtn && sidebar) {
+          toggleBtn.addEventListener("click", function (e) {
+            sidebar.classList.toggle("active");
+            e.stopPropagation();
+          });
 
-      // Close the mobile drawer menu seamlessly if user taps outside of it
-      document.addEventListener("click", function (e) {
-        if (!sidebar.contains(e.target) && e.target !== toggleBtn) {
-          sidebar.classList.remove("active");
+          // Close the mobile drawer menu seamlessly if user taps outside of it
+          document.addEventListener("click", function (e) {
+            if (!sidebar.contains(e.target) && e.target !== toggleBtn) {
+              sidebar.classList.remove("active");
+            }
+          });
         }
       });
-    }
-  });
     </script>
   </body>
 </html>

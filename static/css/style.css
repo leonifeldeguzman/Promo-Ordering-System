@@ -55,11 +55,9 @@ body {
   height: 76px;
   z-index: 9999;
   background: var(--white);
-
   display: flex;
   align-items: center;
   padding: 0 40px;
-
   border-bottom: 1px solid #f0f0f0;
   box-shadow: 0 1px 8px rgba(0,0,0,0.06);
 }
