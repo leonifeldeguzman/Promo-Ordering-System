@@ -1,4 +1,4 @@
-# SpeakNSave — Voice-Assisted Menu Inventory and Promo Ordering System
+# SpeakNSave — Voice-Assisted Menu Inventory and Promo Recommendation System
 
 *"Speak it. Find it. Save it."* — a voice-powered web application that helps customers discover menu items and promotions using natural language and voice commands while allowing administrators to efficiently manage inventory.
 
