@@ -326,7 +326,7 @@
         // FORM VALIDATION ONLY (NO BLOCKING SUBMIT)
         // =========================
         const form = document.getElementById("adminForm");
-        
+
         document
           .getElementById("clearFormBtn")
           .addEventListener("click", () => {
@@ -461,7 +461,9 @@
           const price = text.match(/price\s+(\d+)/);
           const category = text.match(/category\s+(.+?)(?=promo|status|$)/);
           const promo = text.match(/promo\s+(.+?)(?=status|$)/);
-          const status = text.match(/status\s+(active|sold out|phased out)/);
+          const status = text.match(
+            /status\s+(active|sold\s*out|phased\s*out)/i,
+          );
           const servingSize =
             text.match(/serving size\s+(\d+)/i) ||
             text.match(/serves\s+(\d+)/i) ||
@@ -519,10 +521,15 @@
           }
 
           // =========================
-          // STATUS
+          // STATUS (FIXED)
           // =========================
           if (status) {
-            const val = capitalize(status[1]);
+            let val = status[1].toLowerCase();
+
+            if (val.includes("sold")) val = "Sold Out";
+            else if (val.includes("phased")) val = "Phased Out";
+            else val = "Active";
+
             document.getElementById("status").value = val;
             speak(`Status set to ${val}`);
           }
