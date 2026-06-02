@@ -243,17 +243,19 @@ Burgers under 100 and drinks under 50
 
 ### Admin Commands
 
-| Voice Command            | Action             |
-| ------------------------ | ------------------ |
-| "Add cheeseburger"       | Sets menu name     |
-| "Price 120"              | Sets item price    |
-| "Category burgers"       | Sets category      |
-| "Serving size 2"         | Sets serving size  |
-| "Promo buy one take one" | Sets promo details |
-| "Status active"          | Sets item status   |
-| "Add to menu"            | Saves item         |
+| Voice Command            | Action                               |
+| ------------------------ | ------------------------------------ |
+| "Add cheeseburger"       | Sets the menu item name              |
+| "Price 120"              | Sets the item price                  |
+| "Category burgers"       | Sets the menu category               |
+| "Serving size 1"         | Sets the serving size                |
+| "Promo buy one take one" | Sets the promo details               |
+| "Status active"          | Sets the item status                 |
+| "Upload image"           | Opens the image selection dialog     |
+| "Submit to menu"         | Saves the menu item to the inventory |
 
----
+```
+```
 
 ## CRUD Operations
 
