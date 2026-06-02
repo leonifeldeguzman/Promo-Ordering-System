@@ -2,7 +2,7 @@
 
 *"Speak it. Find it. Save it."* — a voice-powered web application that helps customers discover menu items and promotions using natural language and voice commands while allowing administrators to efficiently manage inventory.
 
-#Table of Contents
+## Table of Contents
 
 * About the Project
 * Features
@@ -18,7 +18,7 @@
 
 ---
 
-#About the Project
+## About the Project
 
 SpeakNSave is a Flask-based web application designed to modernize menu browsing and inventory management through voice interaction and intelligent search. The system allows customers to search menu items and promotions using natural language or voice commands while enabling administrators to manage inventory through a dedicated admin panel.
 
@@ -28,9 +28,9 @@ Built as a final project for Applications Development and Emerging Technologies 
 
 ---
 
-#Features
+## Features
 
-#Customer Features
+### Customer Features
 
 * Voice-powered menu and promo search
 * Natural language search queries
@@ -40,7 +40,7 @@ Built as a final project for Applications Development and Emerging Technologies 
 * Promo discovery and filtering
 * Responsive design for desktop and mobile users
 
-#Administrator Features
+### Administrator Features
 
 * Add menu items with image uploads
 * Edit menu information directly from the inventory table
@@ -50,7 +50,7 @@ Built as a final project for Applications Development and Emerging Technologies 
 * Promo management
 * Menu image management
 
-#Core Features
+### Core Features
 
 * Voice command processing using Web Speech API
 * Intelligent query interpretation
@@ -63,41 +63,41 @@ Built as a final project for Applications Development and Emerging Technologies 
 
 ---
 
-#Tech Stack
+## Tech Stack
 
-| Layer             | Technology                  |
-| ----------------- | --------------------------- |
-| Backend           | Flask (Python)              |
-| Database          | MySQL                       |
-| Frontend          | HTML5, CSS3, JavaScript     |
-| Voice Recognition | Web Speech API              |
-| Styling           | Custom CSS                  |
-| Icons             | Font Awesome                |
-| Authentication    | Flask Sessions              |
-| Image Upload      | Flask File Handling         |
-| Deployment        | Railway / Render (Optional) |
+| Layer             | Technology             |
+| ----------------- | ---------------------- |
+| Backend           | Flask (Python)         |
+| Database          | PostgreSQL             |
+| Frontend          | HTML5, CSS, JavaScript |
+| Voice Recognition | Web Speech API         |
+| Styling           | Custom CSS             |
+| Icons             | Font Awesome           |
+| Authentication    | Flask Sessions         |
+| Image Upload      | Flask File Handling    |
+| Deployment        | Railway                |
 
 ---
 
-# Getting Started
+## Getting Started
 
-## Prerequisites
+### Prerequisites
 
 * Python 3.10+
-* MySQL
+* PostgreSQL
 * Git
 * Google Chrome or Microsoft Edge (for voice features)
 
-## Installation
+### Installation
 
-### 1. Clone the repository
+#### 1. Clone the repository
 
 ```bash
 git clone https://github.com/yourusername/SpeakNSave.git
 cd SpeakNSave
 ```
 
-### 2. Create and activate a virtual environment
+#### 2. Create and activate a virtual environment
 
 ```bash
 python -m venv venv
@@ -115,21 +115,21 @@ Mac/Linux:
 source venv/bin/activate
 ```
 
-### 3. Install dependencies
+#### 3. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure Environment Variables
+#### 4. Configure Environment Variables
 
 Create a `.env` file and follow the Environment Variables section below.
 
-### 5. Initialize the Database
+#### 5. Initialize the Database
 
 Import the provided SQL database or run the required schema scripts.
 
-### 6. Run the Application
+#### 6. Run the Application
 
 ```bash
 python app.py
@@ -143,7 +143,7 @@ http://127.0.0.1:5000
 
 ---
 
-# Environment Variables
+## Environment Variables
 
 Create a `.env` file in the project root.
 
@@ -153,7 +153,7 @@ SECRET_KEY=your_secret_key
 
 # Database
 DB_HOST=localhost
-DB_USER=root
+DB_USER=your_username
 DB_PASSWORD=your_password
 DB_NAME=speaknsave
 
@@ -165,37 +165,37 @@ GROQ_API_KEY=your_api_key
 
 ---
 
-# Usage
+## Usage
 
-## Customer Search Examples
+### Customer Search Examples
 
 Users can search using text or voice commands.
 
-### Search by Category
+#### Search by Category
 
 ```text
 Show me burgers
 ```
 
-### Search by Budget
+#### Search by Budget
 
 ```text
 Find meals under 100 pesos
 ```
 
-### Search by Serving Size
+#### Search by Serving Size
 
 ```text
 Show food for 3 people
 ```
 
-### Search Promos
+#### Search Promos
 
 ```text
 Show available promos
 ```
 
-### Combined Search
+#### Combined Search
 
 ```text
 Find desserts under 99 pesos
@@ -203,9 +203,9 @@ Find desserts under 99 pesos
 
 ---
 
-# Voice Commands
+## Voice Commands
 
-## Customer Commands
+### Customer Commands
 
 | Voice Command                | Action                    |
 | ---------------------------- | ------------------------- |
@@ -215,7 +215,7 @@ Find desserts under 99 pesos
 | "Show promos"                | Promo search              |
 | "Food for 4 people"          | Serving size filtering    |
 
-## Admin Commands
+### Admin Commands
 
 | Voice Command            | Action             |
 | ------------------------ | ------------------ |
@@ -229,9 +229,9 @@ Find desserts under 99 pesos
 
 ---
 
-# CRUD Operations
+## CRUD Operations
 
-## Create
+### Create
 
 Administrators can add new menu items through:
 
@@ -239,9 +239,9 @@ Administrators can add new menu items through:
 * Voice-assisted input
 * Image upload support
 
-The data is submitted to the backend and stored in the MySQL database.
+The data is submitted to the backend and stored in the database.
 
-## Read
+### Read
 
 Menu items are retrieved from the database and displayed in a dynamic inventory table.
 
@@ -254,7 +254,7 @@ Displayed information includes:
 * Status
 * Promo Details
 
-## Update
+### Update
 
 Administrators can edit menu records directly within the inventory table.
 
@@ -269,7 +269,7 @@ Editable fields include:
 
 Changes are sent through asynchronous requests and immediately reflected in the system.
 
-## Delete
+### Delete
 
 Items can be removed through a confirmation modal.
 
@@ -280,7 +280,7 @@ After confirmation:
 
 ---
 
-# Known Limitations
+## Known Limitations
 
 * Voice recognition depends on Web Speech API support
 * Best performance on Google Chrome and Microsoft Edge
@@ -291,7 +291,7 @@ After confirmation:
 
 ---
 
-# Future Improvements
+## Future Improvements
 
 * AI-powered conversational ordering assistant
 * Multilingual voice support (Filipino and English)
@@ -305,7 +305,7 @@ After confirmation:
 
 ---
 
-# Team
+## Team
 
 Developed by:
 
