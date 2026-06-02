@@ -530,49 +530,81 @@
         return clauses.map(clause => processSingleQuery(clause));
       }
 
-      function processSingleQuery(transcript) {
-        let text = transcript.toLowerCase().trim();
-        text = text.replace(/(?:₱|php|p)(\d+)/gi, "$1");
-        
-        const textToNumber = (inputStr) => {
-          const words = { zero:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10, eleven:11, twelve:12, thirteen:13, fourteen:14, fifteen:15, sixteen:16, seventeen:17, eighteen:18, nineteen:19, twenty:20, thirty:30, forty:40, fifty:50, sixty:60, seventy:70, eighty:80, ninety:90 };
-          const scales = { hundred:100, thousand:1000 };
-          const tokens = inputStr.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/);
-          let currentResult = 0, finalResult = 0, hasNumber = false;
-          for (let word of tokens) {
-            if (words[word] !== undefined) { currentResult += words[word]; hasNumber = true; }
-            else if (scales[word] !== undefined) { currentResult *= scales[word]; finalResult += currentResult; currentResult = 0; hasNumber = true; }
-            else if (!isNaN(word) && word !== "") { currentResult += parseInt(word); hasNumber = true; }
-          }
-          finalResult += currentResult;
-          return hasNumber ? finalResult : null;
-        };
-        
-        let pax = null;
-        let budget = null;
-        let budgetType = null;
-        
-        const paxMatch = text.match(/(?:for|feed|good for|pax|people|persons?)\s+([a-z0-9\s]+?)(?:$|\s+(?:under|below|above|over|pesos|php|p\d))/i);
-        if (paxMatch) { const parsed = textToNumber(paxMatch[1]); if (parsed) pax = parsed; }
-        
-        if (/under|below|less than/.test(text)) budgetType = "under";
-        else if (/above|over|more than/.test(text)) budgetType = "above";
-        
-        const budgetMatch = text.match(/\b(\d+)\b/);
-        if (budgetMatch) budget = parseInt(budgetMatch[1]);
-        
-        const isAllPromos = /\b(all|everything|menu)\b/.test(text) && !budget && !pax;
-        
-        let baseUrl, params = [];
-        if (isAllPromos) { baseUrl = "/promos/search"; params.push("q=all"); }
-        else { baseUrl = "/promos/search"; params.push(`q=${encodeURIComponent(text)}`); }
-        
-        if (budget) params.push(`budget=${budget}`);
-        if (budgetType) params.push(`type=${budgetType === "under" ? "below" : "above"}`);
-        if (pax) params.push(`pax=${pax}`);
-        
-        return `${baseUrl}?${params.join("&")}`;
+    function processSingleQuery(transcript) {
+  let text = transcript.toLowerCase().trim();
+  text = text.replace(/(?:₱|php|p)(\d+)/gi, "$1");
+  
+  const textToNumber = (inputStr) => {
+    const words = { zero:0, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10, eleven:11, twelve:12, thirteen:13, fourteen:14, fifteen:15, sixteen:16, seventeen:17, eighteen:18, nineteen:19, twenty:20, thirty:30, forty:40, fifty:50, sixty:60, seventy:70, eighty:80, ninety:90 };
+    const scales = { hundred:100, thousand:1000 };
+    const tokens = inputStr.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/);
+    let currentResult = 0, finalResult = 0, hasNumber = false;
+    for (let word of tokens) {
+      if (words[word] !== undefined) { currentResult += words[word]; hasNumber = true; }
+      else if (scales[word] !== undefined) { currentResult *= scales[word]; finalResult += currentResult; currentResult = 0; hasNumber = true; }
+      else if (!isNaN(word) && word !== "") { currentResult += parseInt(word); hasNumber = true; }
+    }
+    finalResult += currentResult;
+    return hasNumber ? finalResult : null;
+  };
+  
+  let pax = null;
+  let budget = null;
+  let budgetType = null;
+  
+  // IMPROVED PAX DETECTION - handles "good for 2", "meals good for two", "for 2 people", "2 pax", etc.
+const complexPaxMatch = text.match(/(?:good\s+for|serves?|feeds?|for)\s+([a-z0-9]+)/i);
+  const standalonePaxMatch = text.match(/(\d+)\s*(?:pax|people|person|persons)/i);
+  
+  let detectedPaxStr = null;
+  if (complexPaxMatch) {
+    detectedPaxStr = complexPaxMatch[1];
+  } else if (standalonePaxMatch) {
+    detectedPaxStr = standalonePaxMatch[1];
+  }
+
+  if (detectedPaxStr) {
+    // 1. Check if it's already a raw number string (like "2")
+    if (!isNaN(detectedPaxStr)) {
+      pax = parseInt(detectedPaxStr, 10);
+    } else {
+      // 2. If it's a word (like "two"), pass it to your word-to-number translation matrix
+      const parsedNumber = textToNumber(detectedPaxStr);
+      if (parsedNumber !== null && parsedNumber !== 0) {
+        pax = parsedNumber;
       }
+    }
+  }
+  
+  // BUDGET DETECTION (existing logic remains)
+  if (/under|below|less than/.test(text)) budgetType = "under";
+else if (/above|over|more than/.test(text)) budgetType = "above";
+
+// Remove pax phrases before searching for budget numbers
+let textForBudget = text.replace(
+  /(?:good\s+for|serves?|feeds?|for)\s+[a-z0-9]+\s*(?:people|persons?|pax)?/gi,
+  ""
+);
+
+const budgetMatch = textForBudget.match(/\b(\d+)\b/);
+if (budgetMatch) {
+  budget = parseInt(budgetMatch[1], 10);
+}
+  
+  const isAllPromos = /\b(all|everything|menu)\b/.test(text) && !budget && !pax;
+  
+  let baseUrl, params = [];
+  if (isAllPromos) { baseUrl = "/promos/search"; params.push("q=all"); }
+  else { baseUrl = "/promos/search"; params.push(`q=${encodeURIComponent(text)}`); }
+  
+  if (budget) params.push(`budget=${budget}`);
+  if (budgetType) params.push(`type=${budgetType === "under" ? "below" : "above"}`);
+  if (pax) params.push(`pax=${pax}`);
+  
+  console.log(`Processed: pax=${pax}, budget=${budget}, type=${budgetType}`); // Debug log
+  
+  return `${baseUrl}?${params.join("&")}`;
+}
 
       // ========== VOICE RECOGNITION ==========
       function startVoiceRecognition() {

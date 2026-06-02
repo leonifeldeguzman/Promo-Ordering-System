@@ -333,17 +333,21 @@ def search_promos():
         
         params = []
         
-        # 1. Strip out pure numeric matching strings and budget/pax indicators
-        # This keeps keywords like 'desserts', 'burgers', 'drinks' clean
+        # Strip out matching parameters and textual number strings 
         clean_query = query
         if budget:
             clean_query = clean_query.replace(str(budget), "")
         if pax:
             clean_query = clean_query.replace(str(pax), "")
             
+        # Dictionary map to aggressively strip text number representations from SQL keywords
+        NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
+        for word in NUMBER_WORDS:
+            clean_query = clean_query.replace(word, "")
+            
         FILTER_WORDS = [
             "under", "below", "above", "over", "pax", "people", "person", 
-            "meals", "meal", "food", "items", "promos", "p", "php", "pesos", "for"
+            "meals", "meal", "food", "items", "promos", "p", "php", "pesos", "for", "good"
         ]
         
         # Extract remaining meaningful keywords (e.g., ["desserts"])
@@ -362,7 +366,6 @@ def search_promos():
                 OR COALESCE(LOWER(description), '') LIKE %s
             )
             """
-            # Inject the cleanly isolated structural target keyword
             params.extend([f"%{cleaned_search_keyword}%", f"%{cleaned_search_keyword}%", f"%{cleaned_search_keyword}%"])
             
         # Apply budget filter if provided
@@ -392,7 +395,6 @@ def search_promos():
     except Exception as e:
         print("SEARCH ERROR:", e)
         return jsonify({"error": str(e)}), 500
-
 
 @promo_routes.route("/promos/items/search")
 def search_by_items():
