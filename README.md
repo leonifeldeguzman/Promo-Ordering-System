@@ -227,8 +227,6 @@ Burgers under 100 and drinks under 50
 
 ```
 
----
-
 ## Voice Commands
 
 ### Customer Commands
