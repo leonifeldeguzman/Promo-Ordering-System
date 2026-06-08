@@ -532,6 +532,21 @@
 
     function processSingleQuery(transcript) {
   let text = transcript.toLowerCase().trim();
+  
+  // REMOVE common command phrases to get the actual search term
+  const removePhrases = [
+    "i want a ", "i want an ", "i want ", 
+    "find me ", "find ", "search for ", 
+    "look for ", "show me ", "get me "
+  ];
+  
+  for (const phrase of removePhrases) {
+    if (text.startsWith(phrase)) {
+      text = text.substring(phrase.length);
+      break;
+    }
+  }
+  
   text = text.replace(/(?:₱|php|p)(\d+)/gi, "$1");
   
   const textToNumber = (inputStr) => {
@@ -552,8 +567,8 @@
   let budget = null;
   let budgetType = null;
   
-  // IMPROVED PAX DETECTION - handles "good for 2", "meals good for two", "for 2 people", "2 pax", etc.
-const complexPaxMatch = text.match(/(?:good\s+for|serves?|feeds?|for)\s+([a-z0-9]+)/i);
+  // PAX DETECTION
+  const complexPaxMatch = text.match(/(?:good\s+for|serves?|feeds?|for)\s+([a-z0-9]+)/i);
   const standalonePaxMatch = text.match(/(\d+)\s*(?:pax|people|person|persons)/i);
   
   let detectedPaxStr = null;
@@ -564,11 +579,9 @@ const complexPaxMatch = text.match(/(?:good\s+for|serves?|feeds?|for)\s+([a-z0-9
   }
 
   if (detectedPaxStr) {
-    // 1. Check if it's already a raw number string (like "2")
     if (!isNaN(detectedPaxStr)) {
       pax = parseInt(detectedPaxStr, 10);
     } else {
-      // 2. If it's a word (like "two"), pass it to your word-to-number translation matrix
       const parsedNumber = textToNumber(detectedPaxStr);
       if (parsedNumber !== null && parsedNumber !== 0) {
         pax = parsedNumber;
@@ -576,32 +589,37 @@ const complexPaxMatch = text.match(/(?:good\s+for|serves?|feeds?|for)\s+([a-z0-9
     }
   }
   
-  // BUDGET DETECTION (existing logic remains)
+  // BUDGET DETECTION
   if (/under|below|less than/.test(text)) budgetType = "under";
-else if (/above|over|more than/.test(text)) budgetType = "above";
+  else if (/above|over|more than/.test(text)) budgetType = "above";
 
-// Remove pax phrases before searching for budget numbers
-let textForBudget = text.replace(
-  /(?:good\s+for|serves?|feeds?|for)\s+[a-z0-9]+\s*(?:people|persons?|pax)?/gi,
-  ""
-);
+  // Remove pax phrases before searching for budget numbers
+  let textForBudget = text.replace(
+    /(?:good\s+for|serves?|feeds?|for)\s+[a-z0-9]+\s*(?:people|persons?|pax)?/gi,
+    ""
+  );
 
-const budgetMatch = textForBudget.match(/\b(\d+)\b/);
-if (budgetMatch) {
-  budget = parseInt(budgetMatch[1], 10);
-}
+  const budgetMatch = textForBudget.match(/\b(\d+)\b/);
+  if (budgetMatch) {
+    budget = parseInt(budgetMatch[1], 10);
+  }
   
   const isAllPromos = /\b(all|everything|menu)\b/.test(text) && !budget && !pax;
   
   let baseUrl, params = [];
-  if (isAllPromos) { baseUrl = "/promos/search"; params.push("q=all"); }
-  else { baseUrl = "/promos/search"; params.push(`q=${encodeURIComponent(text)}`); }
+  if (isAllPromos) { 
+    baseUrl = "/promos/search"; 
+    params.push("q=all"); 
+  } else { 
+    baseUrl = "/promos/search"; 
+    params.push(`q=${encodeURIComponent(text)}`); 
+  }
   
   if (budget) params.push(`budget=${budget}`);
   if (budgetType) params.push(`type=${budgetType === "under" ? "below" : "above"}`);
   if (pax) params.push(`pax=${pax}`);
   
-  console.log(`Processed: pax=${pax}, budget=${budget}, type=${budgetType}`); // Debug log
+  console.log(`Processed: text="${text}", pax=${pax}, budget=${budget}, type=${budgetType}`);
   
   return `${baseUrl}?${params.join("&")}`;
 }
